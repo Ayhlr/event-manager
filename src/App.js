@@ -26,13 +26,18 @@ import EventApprovalsPage from "./pages/admin/EventApprovalsPage";
 import ApprovedEventsPage from "./pages/admin/ApprovedEventsPage";
 import AdminProfilePage from "./pages/admin/ProfilePage";
 import AdminSettingsPage from "./pages/admin/SettingsPage";
+import ManagerHomePage from "./pages/manager/ManagerHomePage";
+
 function AppContent() {
   const location = useLocation();
 
-  const showNavbar =
-    location.pathname === "/" ||
-    location.pathname === "/login" ||
-    location.pathname === "/signup";
+  const token = localStorage.getItem("token");
+
+const showNavbar =
+  location.pathname === "/" ||
+  location.pathname === "/login" ||
+  location.pathname === "/signup" ||
+  (location.pathname === "/home" && !token);
 
   return (
     <>
@@ -54,9 +59,9 @@ function AppContent() {
 
         {/* MANAGER */}
         <Route path="/manager" element={<ManagerLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="create" element={<CreateEventPage />} />
-          <Route path="events" element={<MyCreatedEventsPage />} />
+  <Route index element={<ManagerHomePage />} />
+  <Route path="create" element={<CreateEventPage />} />
+  <Route path="events" element={<MyCreatedEventsPage />} />
           <Route path="requests" element={<ManageRequestsPage />} />
           <Route path="participants" element={<ParticipantsPage />} />
           <Route path="profile" element={<ProfilePage />} />

@@ -1,24 +1,64 @@
 import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
-import { useNavigate } from "react-router-dom";
+import Alert from "react-bootstrap/Alert";
+import { apiRequest } from "../../api";
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [role, setRole] = useState("student");
 
-  const handleLogin = () => {
-  localStorage.setItem("isLoggedIn", "true");
-  localStorage.setItem("role", role);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  if (role === "manager") {
-    navigate("/manager");
-  } else if (role === "admin") {
-    navigate("/admin");
-  } else {
-    navigate("/home");
-  }
-};
+  const [viewMode, setViewMode] = useState("student");
+
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    try {
+      setError("");
+      setLoading(true);
+
+      const data = await apiRequest("/auth/login", "POST", {
+        email,
+        password
+      });
+
+      const realRole = data.user.role;
+
+      if (viewMode === "manager" && realRole !== "manager") {
+        setError("You are not approved as a manager.");
+        return;
+      }
+
+      if (viewMode === "admin" && realRole !== "admin") {
+        setError("You are not an admin.");
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("role", realRole);
+      localStorage.setItem("viewMode", viewMode);
+      localStorage.setItem("isLoggedIn", "true");
+
+      if (viewMode === "manager") {
+        navigate("/manager");
+      } else if (viewMode === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/home");
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -26,52 +66,83 @@ function LoginPage() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        height: "80vh"
+        minHeight: "80vh"
       }}
     >
       <div
         style={{
-          width: "350px",
-          padding: "30px",
+          width: "420px",
+          padding: "35px",
           border: "1px solid #ddd",
-          borderRadius: "10px"
+          borderRadius: "15px",
+          background: "white"
         }}
       >
-        <h3 style={{ textAlign: "center", marginBottom: "20px" }}>
-          Login
-        </h3>
+        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>Login</h2>
 
-        <Form>
-          <Form.Group style={{ marginBottom: "15px" }}>
+        <p style={{ textAlign: "center", color: "#666", marginBottom: "25px" }}>
+          Welcome back to Event It
+        </p>
+
+        {error && <Alert variant="danger">{error}</Alert>}
+
+        <Form onSubmit={handleLogin}>
+          <Form.Group style={{ marginBottom: "18px" }}>
             <Form.Label>Email</Form.Label>
-            <Form.Control type="email" placeholder="Enter email" />
+            <Form.Control
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </Form.Group>
 
-          <Form.Group style={{ marginBottom: "15px" }}>
+          <Form.Group style={{ marginBottom: "18px" }}>
             <Form.Label>Password</Form.Label>
-            <Form.Control type="password" placeholder="Enter password" />
+            <Form.Control
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </Form.Group>
 
-          <Form.Group style={{ marginBottom: "20px" }}>
-            <Form.Label>Login As</Form.Label>
+          <Form.Group style={{ marginBottom: "22px" }}>
+            <Form.Label>Continue as</Form.Label>
             <Form.Select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
+              value={viewMode}
+              onChange={(e) => setViewMode(e.target.value)}
             >
-              <option value="student">Student</option>
-              <option value="manager">Event Manager</option>
-              <option value="admin">Admin</option>
+              <option value="student">Student </option>
+              <option value="manager">Manager </option>
+              <option value="admin">Admin </option>
             </Form.Select>
           </Form.Group>
 
           <Button
+            type="submit"
             variant="dark"
-            style={{ width: "100%" }}
-            onClick={handleLogin}
+            style={{ width: "100%", marginBottom: "20px" }}
+            disabled={loading}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </Button>
         </Form>
+
+        <p style={{ textAlign: "center" }}>
+          Don't have an account?{" "}
+          <Link to="/signup" style={{ fontWeight: "bold", color: "black" }}>
+            Sign up
+          </Link>
+        </p>
+
+        <p style={{ textAlign: "center" }}>
+          <Link to="/home" style={{ color: "#555" }}>
+            Continue as guest
+          </Link>
+        </p>
       </div>
     </div>
   );

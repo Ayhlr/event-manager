@@ -1,70 +1,278 @@
+import { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
+import Alert from "react-bootstrap/Alert";
+import { apiRequest } from "../../api";
 
 function ProfilePage() {
+  const [user, setUser] = useState(null);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phoneNumber: "",
+    bio: "",
+    studentId: "",
+    role: ""
+  });
+
+  const [eventsJoined, setEventsJoined] = useState(0);
+  const [totalPoints, setTotalPoints] = useState(0);
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const fetchProfile = async () => {
+    try {
+      setError("");
+
+      const data = await apiRequest("/users/me");
+
+      setUser(data);
+
+      setFormData({
+        firstName: data.firstName || "",
+        lastName: data.lastName || "",
+        email: data.email || "",
+        phoneNumber: data.phoneNumber || "",
+        bio: data.bio || "",
+        studentId: data.studentId || "",
+        role: data.role || ""
+      });
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const fetchStudentStats = async () => {
+    try {
+      const data = await apiRequest("/registrations/my-registrations");
+
+      const registrations = Array.isArray(data)
+        ? data
+        : data.registrations || data.myRegistrations || [];
+
+      setEventsJoined(registrations.length);
+
+      const points = registrations.reduce((total, registration) => {
+        const eventPoints = Number(registration.event?.points || 0);
+        const registrationPoints = Number(registration.pointsEarned || 0);
+
+        return total + (registrationPoints || eventPoints);
+      }, 0);
+
+      setTotalPoints(points);
+    } catch (err) {
+      // This can fail for manager/admin because this route is student-only.
+      setEventsJoined(0);
+      setTotalPoints(0);
+    }
+  };
+
+  const loadPage = async () => {
+    try {
+      setLoading(true);
+      await fetchProfile();
+      await fetchStudentStats();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
+
+  const handleCancel = () => {
+    if (!user) return;
+
+    setFormData({
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      email: user.email || "",
+      phoneNumber: user.phoneNumber || "",
+      bio: user.bio || "",
+      studentId: user.studentId || "",
+      role: user.role || ""
+    });
+
+    setSuccess("");
+    setError("");
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+
+    try {
+      setSaving(true);
+      setError("");
+      setSuccess("");
+
+      const updatedData = await apiRequest("/users/me", "PUT", {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phoneNumber: formData.phoneNumber,
+        bio: formData.bio
+      });
+
+      const updatedUser = updatedData.user;
+
+      setUser(updatedUser);
+
+      setFormData({
+        firstName: updatedUser.firstName || "",
+        lastName: updatedUser.lastName || "",
+        email: updatedUser.email || "",
+        phoneNumber: updatedUser.phoneNumber || "",
+        bio: updatedUser.bio || "",
+        studentId: updatedUser.studentId || "",
+        role: updatedUser.role || ""
+      });
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          id: updatedUser._id,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          email: updatedUser.email,
+          role: updatedUser.role
+        })
+      );
+
+      setSuccess("Profile updated successfully.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex" }}>
+        <Sidebar />
+
+        <div
+          style={{
+            marginLeft: "250px",
+            padding: "30px",
+            width: "100%"
+          }}
+        >
+          <p>Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: "flex" }}>
-      
       <Sidebar />
 
-      <div style={{
-        marginLeft: "250px",
-        padding: "30px",
-        width: "100%"
-      }}>
-        
-        {/* Title */}
+      <div
+        style={{
+          marginLeft: "250px",
+          padding: "30px",
+          width: "100%"
+        }}
+      >
         <h2>Profile</h2>
-        <p style={{ color: "#666" }}>
-          Manage your account information
-        </p>
+
+        <p style={{ color: "#666" }}>Manage your account information</p>
+
+        {error && (
+          <Alert variant="danger" style={{ maxWidth: "780px" }}>
+            {error}
+          </Alert>
+        )}
+
+        {success && (
+          <Alert variant="success" style={{ maxWidth: "780px" }}>
+            {success}
+          </Alert>
+        )}
 
         <div style={{ display: "flex", gap: "30px", marginTop: "20px" }}>
-          
           {/* LEFT SIDE */}
           <div style={boxStyle}>
             <div style={{ textAlign: "center" }}>
               <div style={avatarStyle}>👤</div>
-              <h4>Ahmed Al-Mutairi</h4>
-              <p style={{ color: "#666" }}>Student</p>
+
+              <h4>{fullName || "User"}</h4>
+
+              <p style={{ color: "#666", textTransform: "capitalize" }}>
+                {formData.role || "User"}
+              </p>
             </div>
 
-            <p>📧 ahmed.mutairi@ku.edu.kw</p>
-            <p>📞 +965 9999 9999</p>
+            <p>📧 {formData.email || "No email"}</p>
+            <p>📞 {formData.phoneNumber || "No phone number"}</p>
 
             <hr />
 
             <h5>Quick Stats</h5>
-            <p>⭐ Total Points: 225</p>
-            <p>📅 Events Joined: 12</p>
+            <p>⭐ Total Points: {totalPoints}</p>
+            <p>📅 Events Joined: {eventsJoined}</p>
           </div>
 
           {/* RIGHT SIDE */}
           <div style={boxStyle}>
             <h4>Edit Profile</h4>
 
-            <Form>
+            <Form onSubmit={handleSave}>
               <div style={{ display: "flex", gap: "15px" }}>
                 <Form.Group style={{ flex: 1 }}>
                   <Form.Label>First Name</Form.Label>
-                  <Form.Control defaultValue="Ahmed" />
+                  <Form.Control
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    required
+                  />
                 </Form.Group>
 
                 <Form.Group style={{ flex: 1 }}>
                   <Form.Label>Last Name</Form.Label>
-                  <Form.Control defaultValue="Al-Mutairi" />
+                  <Form.Control
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    required
+                  />
                 </Form.Group>
               </div>
 
               <Form.Group style={{ marginTop: "15px" }}>
                 <Form.Label>Email</Form.Label>
-                <Form.Control defaultValue="ahmed.mutairi@ku.edu.kw" />
+                <Form.Control
+                  name="email"
+                  value={formData.email}
+                  disabled
+                />
               </Form.Group>
 
               <Form.Group style={{ marginTop: "15px" }}>
                 <Form.Label>Phone Number</Form.Label>
-                <Form.Control defaultValue="+965 9999 9999" />
+                <Form.Control
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  placeholder="+965 9999 9999"
+                />
               </Form.Group>
 
               <Form.Group style={{ marginTop: "15px" }}>
@@ -72,22 +280,38 @@ function ProfilePage() {
                 <Form.Control
                   as="textarea"
                   rows={3}
-                  defaultValue="Computer Science student passionate about technology and innovation."
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleChange}
+                  placeholder="Write something about yourself..."
                 />
               </Form.Group>
 
               <Form.Group style={{ marginTop: "15px" }}>
                 <Form.Label>Student ID</Form.Label>
-                <Form.Control defaultValue="2021450123" disabled />
+                <Form.Control
+                  name="studentId"
+                  value={formData.studentId || "Not available"}
+                  disabled
+                />
               </Form.Group>
 
               <div style={{ marginTop: "20px" }}>
-                <Button variant="dark">Save Changes</Button>{" "}
-                <Button variant="outline-dark">Cancel</Button>
+                <Button variant="dark" type="submit" disabled={saving}>
+                  {saving ? "Saving..." : "Save Changes"}
+                </Button>{" "}
+
+                <Button
+                  variant="outline-dark"
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={saving}
+                >
+                  Cancel
+                </Button>
               </div>
             </Form>
           </div>
-
         </div>
       </div>
     </div>

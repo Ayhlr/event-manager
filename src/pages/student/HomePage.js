@@ -1,5 +1,5 @@
-import { useState } from "react";
-import initialEvents from "../../data/events";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import EventCard from "../../components/EventCard";
 import HeroSection from "../../components/HeroSection";
 import CategorySection from "../../components/CategorySection";
@@ -8,26 +8,139 @@ import Sidebar from "../../components/Sidebar";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
+import { apiRequest } from "../../api";
 
 function HomePage() {
-  const [events, setEvents] = useState(initialEvents);
+  const navigate = useNavigate();
+
+const token = localStorage.getItem("token");
+const role = localStorage.getItem("role");
+const viewMode = localStorage.getItem("viewMode");
+
+const showSidebar = token && role === "student" && viewMode === "student";
+  const [events, setEvents] = useState([]);
   const [joinedEvents, setJoinedEvents] = useState([]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [selectedStadium, setSelectedStadium] = useState("All Stadiums");
 
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const [showAttendModal, setShowAttendModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [joinType, setJoinType] = useState("");
   const [requestMessage, setRequestMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const fetchEvents = async () => {
+    try {
+      setError("");
+
+      const data = await apiRequest("/events");
+
+      const approvedEvents = data.filter(
+        (event) => event.status === "approved"
+      );
+
+      setEvents(approvedEvents);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const fetchJoinedEvents = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+      const viewMode = localStorage.getItem("viewMode");
+
+      if (!token || (role !== "student" && viewMode !== "student")) {
+        setJoinedEvents([]);
+        return;
+      }
+
+      const data = await apiRequest("/registrations/my-registrations");
+
+      const registrations = Array.isArray(data)
+        ? data
+        : data.registrations || data.myRegistrations || [];
+
+      const joinedIds = registrations
+        .map((registration) => {
+          if (registration.event?._id) return registration.event._id;
+          if (registration.eventId?._id) return registration.eventId._id;
+          if (registration.event) return registration.event;
+          if (registration.eventId) return registration.eventId;
+          return null;
+        })
+        .filter(Boolean);
+
+      setJoinedEvents(joinedIds);
+    } catch (err) {
+      console.log("Could not load joined events:", err.message);
+    }
+  };
+
+  useEffect(() => {
+    const loadPageData = async () => {
+      try {
+        setLoading(true);
+        await fetchEvents();
+        await fetchJoinedEvents();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPageData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCategoryClick = (category) => {
     setSelectedCategory(category);
   };
 
   const handleAttendClick = (eventId) => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    const viewMode = localStorage.getItem("viewMode");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    if (role !== "student" && viewMode !== "student") {
+      navigate("/login");
+      return;
+    }
+
+    const selectedEvent = events.find((event) => event._id === eventId);
+
+    if (!selectedEvent) {
+      alert("Event not found.");
+      return;
+    }
+
     if (joinedEvents.includes(eventId)) {
+      alert("You already joined this event.");
+      return;
+    }
+
+    const attending = Number(
+      selectedEvent.attendingCount || selectedEvent.attending || 0
+    );
+
+    const capacity = Number(selectedEvent.capacity || 0);
+    const spotsLeft = Math.max(capacity - attending, 0);
+
+    if (spotsLeft <= 0) {
+      alert("This event is full.");
       return;
     }
 
@@ -42,30 +155,56 @@ function HomePage() {
     setSelectedEventId(null);
     setJoinType("");
     setRequestMessage("");
+    setActionLoading(false);
   };
 
-  const confirmAttend = () => {
+  const confirmAttend = async () => {
     if (!selectedEventId) return;
 
-    if (joinType === "attendee") {
-      setJoinedEvents((prev) => [...prev, selectedEventId]);
+    try {
+      setActionLoading(true);
 
-      setEvents((prevEvents) =>
-        prevEvents.map((event) =>
-          event.id === selectedEventId &&
-          Number(event.attending || 0) < Number(event.capacity || 0)
-            ? { ...event, attending: Number(event.attending || 0) + 1 }
-            : event
-        )
-      );
+      if (joinType === "attendee") {
+        await apiRequest("/registrations", "POST", {
+          eventId: selectedEventId,
+          joinType: "attendee"
+        });
+
+        await fetchEvents();
+        await fetchJoinedEvents();
+
+        handleCloseModal();
+        setSuccessMessage("You joined the event successfully.");
+        setShowSuccessModal(true);
+        return;
+      }
+
+      if (joinType === "organizer") {
+        await apiRequest("/requests", "POST", {
+          eventId: selectedEventId,
+          message: requestMessage
+        });
+
+        handleCloseModal();
+        setSuccessMessage(
+          "Your organizer request has been sent to the event manager."
+        );
+        setShowSuccessModal(true);
+      }
+    } catch (err) {
+      if (err.message.toLowerCase().includes("already joined")) {
+        setJoinedEvents((prev) =>
+          prev.includes(selectedEventId) ? prev : [...prev, selectedEventId]
+        );
+      }
 
       handleCloseModal();
-      return;
-    }
+      await fetchEvents();
+      await fetchJoinedEvents();
 
-    if (joinType === "organizer") {
-      handleCloseModal();
-      setShowSuccessModal(true);
+      alert(err.message);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -74,9 +213,12 @@ function HomePage() {
 
     const title = String(event?.title || "").toLowerCase();
     const location = String(event?.location || "").toLowerCase();
-    const organizer = String(event?.organizer || "").toLowerCase();
+    const organizer = String(
+      event?.organizer?.name || event?.organizer || event?.clubName || ""
+    ).toLowerCase();
+
     const category = String(event?.category || "");
-    const stadium = String(event?.stadium || "");
+    const stadium = String(event?.stadium || event?.location || "");
 
     const matchesSearch =
       title.includes(search) ||
@@ -89,23 +231,36 @@ function HomePage() {
       category === selectedCategory;
 
     const matchesStadium =
-      selectedStadium === "All Stadiums" ||
-      stadium === selectedStadium;
+      selectedStadium === "All Stadiums" || stadium === selectedStadium;
 
     return matchesSearch && matchesCategory && matchesStadium;
   });
 
-  return (
-    <div style={{ display: "flex" }}>
-      <Sidebar />
+  if (loading) {
+    return <p style={{ padding: "30px" }}>Loading events...</p>;
+  }
 
-      <div
-        style={{
-          marginLeft: "250px",
-          padding: "20px",
-          width: "100%"
-        }}
-      >
+  if (error) {
+    return <p style={{ padding: "30px", color: "red" }}>{error}</p>;
+  }
+
+  return (
+  <div
+    style={{
+      width: "100%",
+      minHeight: "100vh"
+    }}
+  >
+    {showSidebar && <Sidebar />}
+
+    <div
+      style={{
+        marginLeft: showSidebar ? "250px" : "0",
+        padding: "20px",
+        width: showSidebar ? "calc(100% - 250px)" : "100%",
+        boxSizing: "border-box"
+      }}
+    >
         <HeroSection />
 
         <CategorySection
@@ -140,10 +295,10 @@ function HomePage() {
           {filteredEvents.length > 0 ? (
             filteredEvents.map((event) => (
               <EventCard
-                key={event.id}
+                key={event._id}
                 event={event}
                 onAttend={handleAttendClick}
-                isJoined={joinedEvents.includes(event.id)}
+                isJoined={joinedEvents.includes(event._id)}
               />
             ))
           ) : (
@@ -202,11 +357,20 @@ function HomePage() {
           </Modal.Body>
 
           <Modal.Footer>
-            <Button variant="outline-secondary" onClick={handleCloseModal}>
+            <Button
+              variant="outline-secondary"
+              onClick={handleCloseModal}
+              disabled={actionLoading}
+            >
               Cancel
             </Button>
-            <Button variant="dark" onClick={confirmAttend} disabled={!joinType}>
-              Confirm
+
+            <Button
+              variant="dark"
+              onClick={confirmAttend}
+              disabled={!joinType || actionLoading}
+            >
+              {actionLoading ? "Processing..." : "Confirm"}
             </Button>
           </Modal.Footer>
         </Modal>
@@ -217,12 +381,14 @@ function HomePage() {
           centered
         >
           <Modal.Header closeButton>
-            <Modal.Title>Request Sent</Modal.Title>
+            <Modal.Title>
+              {successMessage.includes("organizer")
+                ? "Request Sent"
+                : "Joined Event"}
+            </Modal.Title>
           </Modal.Header>
 
-          <Modal.Body>
-            Your organizer request has been sent to the event manager.
-          </Modal.Body>
+          <Modal.Body>{successMessage}</Modal.Body>
 
           <Modal.Footer>
             <Button variant="dark" onClick={() => setShowSuccessModal(false)}>

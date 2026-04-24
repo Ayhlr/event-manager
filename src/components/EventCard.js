@@ -3,8 +3,33 @@ import { useState } from "react";
 function EventCard({ event, onAttend, isJoined }) {
   const [showDetails, setShowDetails] = useState(false);
 
+  const attending = Number(event.attendingCount || event.attending || 0);
+  const capacity = Number(event.capacity || 0);
+
+  const spotsLeft = Math.max(capacity - attending, 0);
+  const isFull = spotsLeft <= 0;
+
   const progress =
-    event.capacity > 0 ? (event.attending / event.capacity) * 100 : 0;
+    capacity > 0 ? Math.min((attending / capacity) * 100, 100) : 0;
+
+  const organizerName =
+    event.organizer?.name ||
+    event.organizer ||
+    event.clubName ||
+    "Event Manager";
+
+  const eventDate = event.date
+    ? new Date(event.date).toLocaleDateString()
+    : "No date";
+
+  const defaultImage =
+    event.category === "Sports"
+      ? "https://images.unsplash.com/photo-1461896836934-ffe607ba8211"
+      : event.category === "Educational"
+      ? "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b"
+      : event.category === "Music"
+      ? "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f"
+      : "https://images.unsplash.com/photo-1511795409834-ef04bbd61622";
 
   return (
     <div
@@ -19,7 +44,14 @@ function EventCard({ event, onAttend, isJoined }) {
     >
       <div style={{ position: "relative" }}>
         <img
-          src={event.image}
+          src={
+            event.image && event.image.startsWith("http")
+              ? event.image
+              : defaultImage
+          }
+          onError={(e) => {
+            e.currentTarget.src = defaultImage;
+          }}
           alt={event.title}
           style={{
             width: "100%",
@@ -49,14 +81,15 @@ function EventCard({ event, onAttend, isJoined }) {
         <h5 style={{ marginBottom: "5px" }}>{event.title}</h5>
 
         <p style={{ fontSize: "13px", color: "#777", marginBottom: "10px" }}>
-          by {event.organizer}
+          by {organizerName}
         </p>
 
         <p style={{ margin: "5px 0" }}>📍 {event.location}</p>
-        <p style={{ margin: "5px 0" }}>📅 {event.date}</p>
-        <p style={{ margin: "5px 0" }}>⏰ {event.time}</p>
+        <p style={{ margin: "5px 0" }}>📅 {eventDate}</p>
+        <p style={{ margin: "5px 0" }}>⏰ {event.time || "No time"}</p>
+
         <p style={{ margin: "5px 0" }}>
-          👥 {event.attending} / {event.capacity} attending
+          👥 {attending} / {capacity} attending
         </p>
 
         <div style={{ marginTop: "10px" }}>
@@ -80,7 +113,7 @@ function EventCard({ event, onAttend, isJoined }) {
           </div>
 
           <p style={{ fontSize: "12px", textAlign: "right" }}>
-            {event.capacity - event.attending} spots left
+            {spotsLeft} spots left
           </p>
         </div>
 
@@ -100,19 +133,19 @@ function EventCard({ event, onAttend, isJoined }) {
           </button>
 
           <button
-            onClick={() => onAttend(event.id)}
-            disabled={isJoined}
+            onClick={() => onAttend(event._id)}
+            disabled={isJoined || isFull}
             style={{
               flex: 1,
               padding: "8px",
               border: "none",
-              background: isJoined ? "#777" : "black",
+              background: isJoined ? "#777" : isFull ? "#b00020" : "black",
               color: "white",
               borderRadius: "6px",
-              cursor: isJoined ? "not-allowed" : "pointer"
+              cursor: isJoined || isFull ? "not-allowed" : "pointer"
             }}
           >
-            {isJoined ? "Joined" : "Attend"}
+            {isJoined ? "Joined" : isFull ? "Full" : "Attend"}
           </button>
         </div>
 
