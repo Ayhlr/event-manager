@@ -14,30 +14,50 @@ function ManageRequestsPage() {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState("");
 
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [studentProfile, setStudentProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+
   const fetchRequests = async () => {
-  try {
-    setLoading(true);
-    setError("");
+    try {
+      setLoading(true);
+      setError("");
 
-    const data = await apiRequest("/requests/manager");
+      const data = await apiRequest("/requests/manager");
 
-    console.log("MANAGER REQUESTS DATA:", data);
+      const realRequests = Array.isArray(data)
+        ? data
+        : data.requests || [];
 
-    const realRequests = Array.isArray(data)
-      ? data
-      : data.requests || [];
-
-    setRequests(realRequests);
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+      setRequests(realRequests);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchRequests();
   }, []);
+
+  const openStudentProfile = async (studentId) => {
+    if (!studentId) return;
+
+    try {
+      setProfileLoading(true);
+      setStudentProfile(null);
+      setShowProfileModal(true);
+
+      const data = await apiRequest(`/users/${studentId}/profile-summary`);
+      setStudentProfile(data);
+    } catch (err) {
+      setError(err.message);
+      setShowProfileModal(false);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
   const formatStatus = (status) => {
     if (!status) return "Pending";
@@ -86,7 +106,8 @@ function ManageRequestsPage() {
       await fetchRequests();
       closeConfirmModal();
     } catch (err) {
-      alert(err.message);
+      setError(err.message);
+      closeConfirmModal();
     } finally {
       setActionLoading(false);
     }
@@ -118,7 +139,6 @@ function ManageRequestsPage() {
         Review and respond to student organizer requests for your events
       </p>
 
-      {/* Stats */}
       <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
         <Card style={{ padding: "15px", flex: 1 }}>
           <small>Total Requests</small>
@@ -141,7 +161,6 @@ function ManageRequestsPage() {
         </Card>
       </div>
 
-      {/* Filters */}
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
         {["All", "Pending", "Approved", "Rejected"].map((f) => (
           <Button
@@ -154,7 +173,6 @@ function ManageRequestsPage() {
         ))}
       </div>
 
-      {/* Requests List */}
       {filteredRequests.length === 0 ? (
         <p style={{ color: "#666" }}>No organizer requests found.</p>
       ) : (
@@ -163,11 +181,15 @@ function ManageRequestsPage() {
 
           const studentName =
             request.name ||
-            `${request.user?.firstName || ""} ${request.user?.lastName || ""}`.trim() ||
+            `${request.user?.firstName || ""} ${
+              request.user?.lastName || ""
+            }`.trim() ||
             "Unknown Student";
 
           const studentEmail =
             request.email || request.user?.email || "No email";
+
+          const studentId = request.user?._id || request.user;
 
           const eventTitle =
             request.eventName || request.event?.title || "Untitled Event";
@@ -183,15 +205,15 @@ function ManageRequestsPage() {
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <div>
                   <h5>
-                    {studentName}{" "}
-                    <span
-                      style={{
-                        border: "1px solid #ccc",
-                        padding: "3px 6px",
-                        marginLeft: "10px",
-                        fontSize: "14px"
-                      }}
+                    <button
+                      type="button"
+                      onClick={() => openStudentProfile(studentId)}
+                      style={nameButtonStyle}
                     >
+                      {studentName}
+                    </button>{" "}
+
+                    <span style={statusBadgeStyle}>
                       {status.toUpperCase()}
                     </span>
                   </h5>
@@ -210,13 +232,7 @@ function ManageRequestsPage() {
                 <div>{formatDate(request.date || request.createdAt)}</div>
               </div>
 
-              <div
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "10px",
-                  margin: "10px 0"
-                }}
-              >
+              <div style={messageBoxStyle}>
                 {request.message || "No message provided."}
               </div>
 
@@ -242,10 +258,69 @@ function ManageRequestsPage() {
         })
       )}
 
+      <Modal
+        show={showProfileModal}
+        onHide={() => setShowProfileModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Student Profile</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          {profileLoading ? (
+            <p>Loading profile...</p>
+          ) : studentProfile ? (
+            <>
+              <p>
+                <b>Name:</b> {studentProfile.firstName}{" "}
+                {studentProfile.lastName}
+              </p>
+
+              <p>
+                <b>Email:</b> {studentProfile.email || "No email"}
+              </p>
+
+              <p>
+                <b>Student ID:</b>{" "}
+                {studentProfile.studentId || "Not available"}
+              </p>
+
+              <p>
+                <b>Phone Number:</b>{" "}
+                {studentProfile.phoneNumber || "Not available"}
+              </p>
+
+              <p>
+                <b>Organizer Points:</b> {studentProfile.organizerPoints}
+              </p>
+
+              <p>
+                <b>Events Joined:</b> {studentProfile.eventsJoined}
+              </p>
+
+              <p>
+                <b>Bio:</b> {studentProfile.bio || "No bio added."}
+              </p>
+            </>
+          ) : (
+            <p>No profile found.</p>
+          )}
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="dark" onClick={() => setShowProfileModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       <Modal show={showModal} onHide={closeConfirmModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>
-            {selectedStatus === "approved" ? "Approve Request" : "Reject Request"}
+            {selectedStatus === "approved"
+              ? "Approve Request"
+              : "Reject Request"}
           </Modal.Title>
         </Modal.Header>
 
@@ -274,5 +349,28 @@ function ManageRequestsPage() {
     </div>
   );
 }
+
+const nameButtonStyle = {
+  background: "none",
+  border: "none",
+  padding: 0,
+  fontWeight: "bold",
+  fontSize: "20px",
+  cursor: "pointer",
+  textDecoration: "underline"
+};
+
+const statusBadgeStyle = {
+  border: "1px solid #ccc",
+  padding: "3px 6px",
+  marginLeft: "10px",
+  fontSize: "14px"
+};
+
+const messageBoxStyle = {
+  border: "1px solid #ddd",
+  padding: "10px",
+  margin: "10px 0"
+};
 
 export default ManageRequestsPage;

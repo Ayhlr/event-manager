@@ -28,7 +28,6 @@ function MyEventsPage() {
 
       const validRegistrations = myRegistrations.filter((registration) => {
         const event = registration.event || registration.eventId;
-
         return event && typeof event === "object" && event._id && event.title;
       });
 
@@ -66,11 +65,7 @@ function MyEventsPage() {
   };
 
   const handleToggleDetails = (registrationId) => {
-    if (openEvent === registrationId) {
-      setOpenEvent(null);
-    } else {
-      setOpenEvent(registrationId);
-    }
+    setOpenEvent(openEvent === registrationId ? null : registrationId);
   };
 
   const openUnenrollModal = (registration) => {
@@ -98,62 +93,55 @@ function MyEventsPage() {
       setOpenEvent(null);
       closeUnenrollModal();
     } catch (err) {
-      alert(err.message);
+      setError(err.message);
+      closeUnenrollModal();
     } finally {
       setActionLoading(false);
     }
   };
+ 
 
-  const upcomingRegistrations = registrations.filter((registration) => {
-    const event = getEventFromRegistration(registration);
+const getEventDateTime = (event) => {
+  if (!event?.date) return null;
 
-    if (!event?.date) return true;
+  const date = new Date(event.date);
 
-    const eventDate = new Date(event.date);
-    const today = new Date();
+  if (event.time) {
+    const [hours, minutes] = event.time.split(":");
+    date.setHours(Number(hours));
+    date.setMinutes(Number(minutes));
+    date.setSeconds(0);
+    date.setMilliseconds(0);
+  } else {
+    date.setHours(23, 59, 0, 0);
+  }
 
-    return eventDate >= today;
-  });
+  return date;
+};
 
-  const completedRegistrations = registrations.filter((registration) => {
-    const event = getEventFromRegistration(registration);
+const upcomingRegistrations = registrations.filter((registration) => {
+  const event = getEventFromRegistration(registration);
+  const eventDateTime = getEventDateTime(event);
 
-    if (!event?.date) return false;
+  if (!eventDateTime) return true;
 
-    const eventDate = new Date(event.date);
-    const today = new Date();
+  return eventDateTime >= new Date();
+});
 
-    return eventDate < today;
-  });
+const completedRegistrations = registrations.filter((registration) => {
+  const event = getEventFromRegistration(registration);
+  const eventDateTime = getEventDateTime(event);
 
-  const totalPoints = registrations.reduce((total, registration) => {
-    const event = getEventFromRegistration(registration);
+  if (!eventDateTime) return false;
 
-    const points =
-      Number(registration.pointsEarned) ||
-      Number(event?.points) ||
-      0;
-
-    return total + points;
-  }, 0);
-
+  return eventDateTime < new Date();
+});
   if (loading) {
     return (
       <div style={{ display: "flex" }}>
         <Sidebar />
-        <div style={{ marginLeft: "250px", padding: "30px", width: "100%" }}>
+        <div style={pageStyle}>
           <p>Loading your events...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ display: "flex" }}>
-        <Sidebar />
-        <div style={{ marginLeft: "250px", padding: "30px", width: "100%" }}>
-          <p style={{ color: "red" }}>{error}</p>
         </div>
       </div>
     );
@@ -163,28 +151,16 @@ function MyEventsPage() {
     <div style={{ display: "flex" }}>
       <Sidebar />
 
-      <div
-        style={{
-          marginLeft: "250px",
-          padding: "30px",
-          width: "100%"
-        }}
-      >
+      <div style={pageStyle}>
         <h2>My Events</h2>
         <p style={{ color: "#666" }}>Track your joined and completed events</p>
 
-        <div
-          style={{
-            border: "1px solid #ddd",
-            padding: "20px",
-            borderRadius: "10px",
-            marginTop: "20px"
-          }}
-        >
-          <h4>Total Points Earned</h4>
-          <h2>{totalPoints}</h2>
+        {error && <p style={{ color: "red" }}>{error}</p>}
 
-          <div style={{ display: "flex", gap: "50px" }}>
+        <div style={summaryBox}>
+          <h4>Joined Events Summary</h4>
+
+          <div style={{ display: "flex", gap: "50px", marginTop: "15px" }}>
             <p>Upcoming Events: {upcomingRegistrations.length}</p>
             <p>Completed Events: {completedRegistrations.length}</p>
           </div>
@@ -223,8 +199,8 @@ function MyEventsPage() {
                       {event.location || "No location"}
                     </p>
 
-                    <p>
-                      ⭐ {registration.pointsEarned || event.points || 0} Points
+                    <p style={{ color: "#888", fontSize: "14px" }}>
+                      You joined as attendee
                     </p>
 
                     <p style={{ color: "#666", fontSize: "14px" }}>
@@ -281,18 +257,12 @@ function MyEventsPage() {
                 <div>
                   <h5>{event.title}</h5>
                   <p>{organizerName}</p>
+                  <p style={{ color: "#888", fontSize: "14px" }}>
+                    You joined as attendee
+                  </p>
                 </div>
 
-                <span
-                  style={{
-                    background: "black",
-                    color: "white",
-                    padding: "5px 10px",
-                    borderRadius: "5px"
-                  }}
-                >
-                  Completed
-                </span>
+                <span style={completedBadge}>Completed</span>
               </div>
             );
           })
@@ -330,6 +300,19 @@ function MyEventsPage() {
   );
 }
 
+const pageStyle = {
+  marginLeft: "250px",
+  padding: "30px",
+  width: "100%"
+};
+
+const summaryBox = {
+  border: "1px solid #ddd",
+  padding: "20px",
+  borderRadius: "10px",
+  marginTop: "20px"
+};
+
 const cardStyle = {
   display: "flex",
   justifyContent: "space-between",
@@ -347,6 +330,13 @@ const detailsStyle = {
   borderRadius: "0 0 10px 10px",
   backgroundColor: "#f9f9f9",
   marginBottom: "10px"
+};
+
+const completedBadge = {
+  background: "black",
+  color: "white",
+  padding: "5px 10px",
+  borderRadius: "5px"
 };
 
 export default MyEventsPage;

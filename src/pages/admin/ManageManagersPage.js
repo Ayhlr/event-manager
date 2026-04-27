@@ -21,11 +21,9 @@ function ManageManagersPage() {
       setLoading(true);
       setError("");
 
-      const data = await apiRequest("/manager-requests/approved-managers");
+     const data = await apiRequest("/users/managers");
 
-      const realManagers = Array.isArray(data)
-        ? data
-        : data.managers || data.requests || [];
+      const realManagers = Array.isArray(data) ? data : data.managers || [];
 
       setManagers(realManagers);
     } catch (err) {
@@ -40,17 +38,15 @@ function ManageManagersPage() {
   }, []);
 
   const getName = (manager) => {
-    if (manager.name) return manager.name;
+  const firstName = manager.firstName || "";
+  const lastName = manager.lastName || "";
 
-    const firstName = manager.user?.firstName || "";
-    const lastName = manager.user?.lastName || "";
-
-    return `${firstName} ${lastName}`.trim() || "Unknown Manager";
-  };
+  return `${firstName} ${lastName}`.trim() || "Unknown Manager";
+};
 
   const getEmail = (manager) => {
-    return manager.email || manager.user?.email || "No email";
-  };
+  return manager.email || "No email";
+};
 
   const formatDate = (dateValue) => {
     if (!dateValue) return "N/A";

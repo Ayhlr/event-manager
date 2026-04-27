@@ -4,14 +4,15 @@ const {
   createOrganizerRequest,
   getMyRequests,
   getManagerEventRequests,
-  updateRequestStatus
+  updateRequestStatus,
+  cancelMyRequest
 } = require("../controllers/requestController");
 const { protect } = require("../middleware/authMiddleware");
 const authorizeRoles = require("../middleware/roleMiddleware");
 
-router.post("/", protect, authorizeRoles("student"), createOrganizerRequest);
-router.get("/my-requests", protect, authorizeRoles("student"), getMyRequests);
-router.get("/manager", protect, authorizeRoles("manager", "admin"), getManagerEventRequests);
-router.put("/:id/status", protect, authorizeRoles("manager", "admin"), updateRequestStatus);
-
+router.post("/", protect, createOrganizerRequest);
+router.get("/my-requests", protect, getMyRequests);
+router.get("/manager", protect, getManagerEventRequests);
+router.put("/:id/status", protect, updateRequestStatus);
+router.delete("/:id", protect, cancelMyRequest);
 module.exports = router;

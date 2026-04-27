@@ -7,6 +7,7 @@ import { apiRequest } from "../../api";
 
 function ProfilePage() {
   const [user, setUser] = useState(null);
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -18,7 +19,7 @@ function ProfilePage() {
   });
 
   const [eventsJoined, setEventsJoined] = useState(0);
-  const [totalPoints, setTotalPoints] = useState(0);
+  const [organizerPoints, setOrganizerPoints] = useState(0);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -26,66 +27,69 @@ function ProfilePage() {
   const [success, setSuccess] = useState("");
 
   const fetchProfile = async () => {
-    try {
-      setError("");
+    const data = await apiRequest("/users/me");
 
-      const data = await apiRequest("/users/me");
+    setUser(data);
 
-      setUser(data);
-
-      setFormData({
-        firstName: data.firstName || "",
-        lastName: data.lastName || "",
-        email: data.email || "",
-        phoneNumber: data.phoneNumber || "",
-        bio: data.bio || "",
-        studentId: data.studentId || "",
-        role: data.role || ""
-      });
-    } catch (err) {
-      setError(err.message);
-    }
+    setFormData({
+      firstName: data.firstName || "",
+      lastName: data.lastName || "",
+      email: data.email || "",
+      phoneNumber: data.phoneNumber || "",
+      bio: data.bio || "",
+      studentId: data.studentId || "",
+      role: data.role || ""
+    });
   };
 
   const fetchStudentStats = async () => {
     try {
-      const data = await apiRequest("/registrations/my-registrations");
+      const registrationsData = await apiRequest("/registrations/my-registrations");
 
-      const registrations = Array.isArray(data)
-        ? data
-        : data.registrations || data.myRegistrations || [];
+      const registrations = Array.isArray(registrationsData)
+        ? registrationsData
+        : registrationsData.registrations || registrationsData.myRegistrations || [];
 
       setEventsJoined(registrations.length);
-
-      const points = registrations.reduce((total, registration) => {
-        const eventPoints = Number(registration.event?.points || 0);
-        const registrationPoints = Number(registration.pointsEarned || 0);
-
-        return total + (registrationPoints || eventPoints);
-      }, 0);
-
-      setTotalPoints(points);
     } catch (err) {
-      // This can fail for manager/admin because this route is student-only.
       setEventsJoined(0);
-      setTotalPoints(0);
+    }
+
+    try {
+      const pointsData = await apiRequest("/points-history/my-points");
+
+      const pointsHistory = Array.isArray(pointsData)
+        ? pointsData
+        : pointsData.pointsHistory || pointsData.history || [];
+
+      const totalEarned = pointsHistory
+        .filter((item) => item.status === "earned")
+        .reduce((total, item) => total + Number(item.points || 0), 0);
+
+      setOrganizerPoints(totalEarned);
+    } catch (err) {
+      setOrganizerPoints(0);
     }
   };
 
   const loadPage = async () => {
     try {
       setLoading(true);
+      setError("");
+
       await fetchProfile();
       await fetchStudentStats();
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadPage();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  loadPage();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -165,14 +169,7 @@ function ProfilePage() {
     return (
       <div style={{ display: "flex" }}>
         <Sidebar />
-
-        <div
-          style={{
-            marginLeft: "250px",
-            padding: "30px",
-            width: "100%"
-          }}
-        >
+        <div style={pageStyle}>
           <p>Loading profile...</p>
         </div>
       </div>
@@ -183,15 +180,8 @@ function ProfilePage() {
     <div style={{ display: "flex" }}>
       <Sidebar />
 
-      <div
-        style={{
-          marginLeft: "250px",
-          padding: "30px",
-          width: "100%"
-        }}
-      >
+      <div style={pageStyle}>
         <h2>Profile</h2>
-
         <p style={{ color: "#666" }}>Manage your account information</p>
 
         {error && (
@@ -207,7 +197,6 @@ function ProfilePage() {
         )}
 
         <div style={{ display: "flex", gap: "30px", marginTop: "20px" }}>
-          {/* LEFT SIDE */}
           <div style={boxStyle}>
             <div style={{ textAlign: "center" }}>
               <div style={avatarStyle}>👤</div>
@@ -225,11 +214,23 @@ function ProfilePage() {
             <hr />
 
             <h5>Quick Stats</h5>
-            <p>⭐ Total Points: {totalPoints}</p>
-            <p>📅 Events Joined: {eventsJoined}</p>
+
+                {formData.role === "student" && (
+                  <>
+                    <p>⭐ Organizer Points: {organizerPoints}</p>
+                    <p>📅 Events Joined: {eventsJoined}</p>
+                  </>
+                )}
+
+                {formData.role === "manager" && (
+                  <p>📅 Manager Account</p>
+                )}
+
+                {formData.role === "admin" && (
+                  <p>🛠 Admin Account</p>
+                )}
           </div>
 
-          {/* RIGHT SIDE */}
           <div style={boxStyle}>
             <h4>Edit Profile</h4>
 
@@ -258,11 +259,7 @@ function ProfilePage() {
 
               <Form.Group style={{ marginTop: "15px" }}>
                 <Form.Label>Email</Form.Label>
-                <Form.Control
-                  name="email"
-                  value={formData.email}
-                  disabled
-                />
+                <Form.Control name="email" value={formData.email} disabled />
               </Form.Group>
 
               <Form.Group style={{ marginTop: "15px" }}>
@@ -317,6 +314,12 @@ function ProfilePage() {
     </div>
   );
 }
+
+const pageStyle = {
+  marginLeft: "250px",
+  padding: "30px",
+  width: "100%"
+};
 
 const boxStyle = {
   flex: 1,

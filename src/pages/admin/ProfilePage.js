@@ -16,8 +16,8 @@ function ProfilePage() {
     studentId: "",
     role: ""
   });
-
   const [eventsJoined, setEventsJoined] = useState(0);
+
   const [totalPoints, setTotalPoints] = useState(0);
 
   const [loading, setLoading] = useState(true);
@@ -232,13 +232,8 @@ function ProfilePage() {
             </div>
 
             <div style={statRowStyle}>
-              <span>⭐ Total Points</span>
-              <strong style={{ color: "#111" }}>{totalPoints}</strong>
-            </div>
-
-            <div style={statRowStyle}>
-              <span>📅 Events Joined</span>
-              <strong style={{ color: "#111" }}>{eventsJoined}</strong>
+              <span>Admin Page</span>
+  
             </div>
           </div>
         </div>

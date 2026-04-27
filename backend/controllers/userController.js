@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
-
+const Registration = require("../models/Registration");
+const PointsHistory = require("../models/PointsHistory");
 const getMyProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("-password");
@@ -101,10 +102,59 @@ const deleteMyAccount = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+const getStudentProfileSummary = async (req, res) => {
+  try {
+    const student = await User.findById(req.params.id).select(
+      "firstName lastName email studentId phoneNumber bio"
+    );
 
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    const eventsJoined = await Registration.countDocuments({
+      user: req.params.id
+    });
+
+    const earnedPoints = await PointsHistory.find({
+      user: req.params.id,
+      status: "earned"
+    });
+
+    const organizerPoints = earnedPoints.reduce((total, record) => {
+      return total + Number(record.points || 0);
+    }, 0);
+
+    res.status(200).json({
+      firstName: student.firstName,
+      lastName: student.lastName,
+      email: student.email,
+      studentId: student.studentId,
+      phoneNumber: student.phoneNumber,
+      bio: student.bio,
+      organizerPoints,
+      eventsJoined
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+const getAllManagers = async (req, res) => {
+  try {
+    const managers = await User.find({ role: "manager" })
+      .select("-password")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(managers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 module.exports = {
   getMyProfile,
   updateMyProfile,
   changePassword,
-  deleteMyAccount
+  deleteMyAccount,
+  getStudentProfileSummary,
+  getAllManagers
 };

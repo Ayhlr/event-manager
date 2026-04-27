@@ -20,6 +20,7 @@ const viewMode = localStorage.getItem("viewMode");
 const showSidebar = token && role === "student" && viewMode === "student";
   const [events, setEvents] = useState([]);
   const [joinedEvents, setJoinedEvents] = useState([]);
+  const [requestedEvents, setRequestedEvents] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
@@ -59,8 +60,7 @@ const showSidebar = token && role === "student" && viewMode === "student";
       const role = localStorage.getItem("role");
       const viewMode = localStorage.getItem("viewMode");
 
-      if (!token || (role !== "student" && viewMode !== "student")) {
-        setJoinedEvents([]);
+if (!token || (role !== "student" && viewMode !== "student")) {        setJoinedEvents([]);
         return;
       }
 
@@ -86,12 +86,39 @@ const showSidebar = token && role === "student" && viewMode === "student";
     }
   };
 
+  const fetchMyRequests = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!token || role !== "student") {
+      setRequestedEvents([]);
+      return;
+    }
+
+    const data = await apiRequest("/requests/my-requests");
+
+    const requestIds = data
+      .map((request) => {
+        if (request.event?._id) return request.event._id;
+        if (request.event) return request.event;
+        return null;
+      })
+      .filter(Boolean);
+
+    setRequestedEvents(requestIds);
+  } catch (err) {
+    console.log("Could not load organizer requests:", err.message);
+  }
+};
+
   useEffect(() => {
     const loadPageData = async () => {
       try {
         setLoading(true);
         await fetchEvents();
         await fetchJoinedEvents();
+        await fetchMyRequests();
       } finally {
         setLoading(false);
       }
@@ -115,7 +142,7 @@ const showSidebar = token && role === "student" && viewMode === "student";
       return;
     }
 
-    if (role !== "student" && viewMode !== "student") {
+    if (role !== "student") { 
       navigate("/login");
       return;
     }

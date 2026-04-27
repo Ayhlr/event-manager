@@ -16,7 +16,9 @@ function ParticipantsPage() {
 
       const data = await apiRequest("/registrations/manager-participants");
 
-      const realParticipants = Array.isArray(data) ? data : data.participants || [];
+      const realParticipants = Array.isArray(data)
+        ? data
+        : data.participants || [];
 
       setParticipants(realParticipants);
     } catch (err) {
@@ -29,6 +31,30 @@ function ParticipantsPage() {
   useEffect(() => {
     fetchParticipants();
   }, []);
+
+  const handleRevokePoints = async (participant) => {
+    try {
+      if (!participant.pointsHistoryId) {
+        alert("No points record found for this participant.");
+        return;
+      }
+
+      const confirmAction = window.confirm(
+        "Are you sure you want to revoke this student's points?"
+      );
+
+      if (!confirmAction) return;
+
+      await apiRequest(`/points-history/${participant.pointsHistoryId}/status`, "PUT", {
+        status: "revoked"
+      });
+
+      alert("Points revoked successfully.");
+      fetchParticipants();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   const getName = (participant) => {
     return (
@@ -83,8 +109,8 @@ function ParticipantsPage() {
     (p) => getStatus(p).toLowerCase() === "confirmed"
   ).length;
 
-  const pendingCount = participants.filter(
-    (p) => getStatus(p).toLowerCase() === "pending"
+  const pendingPointsCount = participants.filter(
+    (p) => p.pointsStatus === "pending"
   ).length;
 
   const totalCapacity = participants.reduce((total, participant) => {
@@ -97,7 +123,8 @@ function ParticipantsPage() {
       return;
     }
 
-    const header = "Name,Email,Student ID,Event,Joined Date,Status\n";
+    const header =
+      "Name,Email,Student ID,Event,Joined Date,Status,Points Status,Points\n";
 
     const rows = participants
       .map((participant) => {
@@ -107,7 +134,9 @@ function ParticipantsPage() {
           getStudentId(participant),
           getEventName(participant),
           getJoinedDate(participant),
-          getStatus(participant)
+          getStatus(participant),
+          participant.pointsStatus || "none",
+          participant.points || 0
         ].join(",");
       })
       .join("\n");
@@ -161,8 +190,8 @@ function ParticipantsPage() {
         </Card>
 
         <Card style={{ padding: "15px", flex: 1 }}>
-          <small>Pending</small>
-          <h3>{pendingCount}</h3>
+          <small>Pending Points</small>
+          <h3>{pendingPointsCount}</h3>
         </Card>
       </div>
 
@@ -190,12 +219,16 @@ function ParticipantsPage() {
               <th>Event</th>
               <th>Joined Date</th>
               <th>Status</th>
+              <th>Points</th>
+              <th>Points Status</th>
+              <th>Action</th>
             </tr>
           </thead>
 
           <tbody>
             {filtered.map((participant) => {
               const status = getStatus(participant);
+              const pointsStatus = participant.pointsStatus || "none";
 
               return (
                 <tr key={participant._id}>
@@ -204,6 +237,7 @@ function ParticipantsPage() {
                   <td>{getStudentId(participant)}</td>
                   <td>{getEventName(participant)}</td>
                   <td>{getJoinedDate(participant)}</td>
+
                   <td>
                     <span
                       style={{
@@ -217,6 +251,41 @@ function ParticipantsPage() {
                     >
                       {status.toUpperCase()}
                     </span>
+                  </td>
+
+                  <td>{participant.points || 0}</td>
+
+                  <td>
+                    <span
+                      style={{
+                        padding: "5px 10px",
+                        border: "1px solid",
+                        color:
+                          pointsStatus === "pending"
+                            ? "#888"
+                            : pointsStatus === "earned"
+                            ? "green"
+                            : pointsStatus === "revoked"
+                            ? "red"
+                            : "black"
+                      }}
+                    >
+                      {pointsStatus.toUpperCase()}
+                    </span>
+                  </td>
+
+                  <td>
+                    {pointsStatus === "pending" ? (
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleRevokePoints(participant)}
+                      >
+                        Revoke Points
+                      </Button>
+                    ) : (
+                      <span style={{ color: "#777" }}>No action</span>
+                    )}
                   </td>
                 </tr>
               );

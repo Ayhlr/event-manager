@@ -1,5 +1,6 @@
 const Request = require("../models/Request");
 const Event = require("../models/Event");
+const PointsHistory = require("../models/PointsHistory");
 
 const createOrganizerRequest = async (req, res) => {
   try {
@@ -49,7 +50,7 @@ const createOrganizerRequest = async (req, res) => {
 const getMyRequests = async (req, res) => {
   try {
     const requests = await Request.find({ user: req.user._id })
-      .populate("event", "title date location status")
+      .populate("event", "title date time location status clubName")
       .sort({ createdAt: -1 });
 
     res.status(200).json(requests);
@@ -60,58 +61,25 @@ const getMyRequests = async (req, res) => {
 
 const getManagerEventRequests = async (req, res) => {
   try {
-    console.log("========== MANAGER REQUEST DEBUG ==========");
-    console.log("Logged in user ID:", req.user._id.toString());
-    console.log("Logged in user role:", req.user.role);
-    console.log("Logged in user email:", req.user.email);
-
-    const allRequests = await Request.find()
-      .populate("event", "title clubName user")
-      .populate("user", "firstName lastName email studentId");
-
-    console.log("All organizer requests in DB:", allRequests.length);
-
-    allRequests.forEach((request) => {
-      console.log("Request:", {
-        requestId: request._id.toString(),
-        eventName: request.eventName,
-        requestStatus: request.status,
-        eventId: request.event?._id?.toString(),
-        eventOwner: request.event?.user?.toString(),
-        studentName: request.name,
-        studentEmail: request.email
-      });
-    });
+    let requests;
 
     if (req.user.role === "admin") {
-      console.log("Admin user detected. Returning all requests.");
-      console.log("==========================================");
-      return res.status(200).json(allRequests);
+      requests = await Request.find()
+        .populate("event", "title clubName date location time user")
+        .populate("user", "firstName lastName email studentId")
+        .sort({ createdAt: -1 });
+    } else {
+      const managerEvents = await Event.find({ user: req.user._id }).select(
+        "_id title clubName"
+      );
+
+      const eventIds = managerEvents.map((event) => event._id);
+
+      requests = await Request.find({ event: { $in: eventIds } })
+        .populate("event", "title clubName date location time user")
+        .populate("user", "firstName lastName email studentId")
+        .sort({ createdAt: -1 });
     }
-
-    const managerEvents = await Event.find({ user: req.user._id }).select(
-      "_id title clubName"
-    );
-
-    console.log("Events created by this manager:", managerEvents.length);
-
-    managerEvents.forEach((event) => {
-      console.log("Manager Event:", {
-        eventId: event._id.toString(),
-        title: event.title,
-        clubName: event.clubName
-      });
-    });
-
-    const eventIds = managerEvents.map((event) => event._id);
-
-    const requests = await Request.find({ event: { $in: eventIds } })
-      .populate("event", "title clubName date location user")
-      .populate("user", "firstName lastName email studentId")
-      .sort({ createdAt: -1 });
-
-    console.log("Requests returned to manager:", requests.length);
-    console.log("==========================================");
 
     res.status(200).json(requests);
   } catch (error) {
@@ -148,8 +116,24 @@ const updateRequestStatus = async (req, res) => {
     }
 
     request.status = status;
-
     const updatedRequest = await request.save();
+
+    if (status === "approved") {
+      const existingPoints = await PointsHistory.findOne({
+        user: request.user,
+        event: request.event._id
+      });
+
+      if (!existingPoints) {
+        await PointsHistory.create({
+          user: request.user,
+          event: request.event._id,
+          eventName: request.event.title,
+          points: 50,
+          status: "pending"
+        });
+      }
+    }
 
     res.status(200).json({
       message: `Request ${status} successfully`,
@@ -163,9 +147,67 @@ const updateRequestStatus = async (req, res) => {
   }
 };
 
+const cancelMyRequest = async (req, res) => {
+  try {
+    const request = await Request.findOne({
+      _id: req.params.id,
+      user: req.user._id
+    }).populate("event");
+
+    if (!request) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    if (request.status === "rejected") {
+      return res.status(400).json({
+        message: "Rejected requests cannot be cancelled"
+      });
+    }
+
+    if (request.event?.date) {
+      const eventDate = new Date(request.event.date);
+
+      if (request.event.time) {
+        const [hours, minutes] = request.event.time.split(":");
+        eventDate.setHours(Number(hours));
+        eventDate.setMinutes(Number(minutes));
+        eventDate.setSeconds(0);
+        eventDate.setMilliseconds(0);
+      } else {
+        eventDate.setHours(23, 59, 0, 0);
+      }
+
+      if (eventDate < new Date()) {
+        return res.status(400).json({
+          message: "You cannot cancel a request after the event date has passed"
+        });
+      }
+    }
+
+    if (request.status === "approved") {
+      await PointsHistory.findOneAndUpdate(
+        {
+          user: request.user,
+          event: request.event?._id || request.event
+        },
+        {
+          status: "revoked"
+        }
+      );
+    }
+
+    await Request.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({ message: "Request cancelled successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 module.exports = {
   createOrganizerRequest,
   getMyRequests,
   getManagerEventRequests,
-  updateRequestStatus
+  updateRequestStatus,
+  cancelMyRequest
 };

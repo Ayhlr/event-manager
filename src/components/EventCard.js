@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function EventCard({ event, onAttend, isJoined }) {
+function EventCard({ event, onAttend, isJoined, isRequested }) {
   const [showDetails, setShowDetails] = useState(false);
 
   const attending = Number(event.attendingCount || event.attending || 0);
@@ -133,20 +133,32 @@ function EventCard({ event, onAttend, isJoined }) {
           </button>
 
           <button
-            onClick={() => onAttend(event._id)}
-            disabled={isJoined || isFull}
-            style={{
-              flex: 1,
-              padding: "8px",
-              border: "none",
-              background: isJoined ? "#777" : isFull ? "#b00020" : "black",
-              color: "white",
-              borderRadius: "6px",
-              cursor: isJoined || isFull ? "not-allowed" : "pointer"
-            }}
-          >
-            {isJoined ? "Joined" : isFull ? "Full" : "Attend"}
-          </button>
+  onClick={() => onAttend(event._id)}
+  disabled={isJoined || isRequested || isFull}
+  style={{
+    flex: 1,
+    padding: "8px",
+    border: "none",
+    background: isJoined
+      ? "#777"
+      : isRequested
+      ? "#999"
+      : isFull
+      ? "#b00020"
+      : "black",
+    color: "white",
+    borderRadius: "6px",
+    cursor: isJoined || isRequested || isFull ? "not-allowed" : "pointer"
+  }}
+>
+  {isJoined
+    ? "Joined"
+    : isRequested
+    ? "Request Sent"
+    : isFull
+    ? "Full"
+    : "Attend"}
+</button>
         </div>
 
         {showDetails && (

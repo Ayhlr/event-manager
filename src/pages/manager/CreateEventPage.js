@@ -34,9 +34,9 @@ function CreateEventPage() {
         date,
         time,
         location,
-        capacity: Number(capacity),
-        image,
-        description
+       capacity: Number(capacity),
+image,
+description
       });
 
       setShowSuccess(true);
@@ -48,6 +48,7 @@ function CreateEventPage() {
       setDate("");
       setTime("");
       setCapacity("");
+      
       setImage("");
       setDescription("");
     } catch (err) {
@@ -120,12 +121,12 @@ function CreateEventPage() {
         <Form.Group className="mb-3">
           <Form.Label>Date</Form.Label>
           <Form.Control
-  type="date"
-  value={date}
-  min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
-  onChange={(e) => setDate(e.target.value)}
-  required
-/>
+            type="date"
+            value={date}
+            min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
+            onChange={(e) => setDate(e.target.value)}
+            required
+          />
         </Form.Group>
 
         <Form.Group className="mb-3">
