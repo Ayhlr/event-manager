@@ -235,30 +235,38 @@ function RequestsPage() {
 const pageStyle = {
   marginLeft: "250px",
   padding: "30px",
-  width: "100%"
+  width: "100%",
+  minHeight: "100vh",
+  backgroundColor: "#d9d9d9",
+  color: "#030817"
 };
 
 const historyBox = {
-  border: "1px solid #ddd",
-  borderRadius: "10px",
+   border: "1.5px solid #1a22383b",
+  borderRadius: "16px",
   marginTop: "20px",
-  backgroundColor: "white"
+  backgroundColor: "#f9f9f9",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.46)",
+  overflow: "hidden"
 };
 
 const requestCard = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  border: "1px solid #ddd",
-  borderRadius: "10px",
+  border: "1.5px solid #1a2238",
+  borderRadius: "16px",
   padding: "18px",
-  margin: "15px 20px"
+  margin: "15px 20px",
+  backgroundColor: "#ffffff"
 };
 
 const statusBadge = {
   padding: "6px 12px",
   fontSize: "12px",
-  fontWeight: "bold"
+  fontWeight: "bold",
+  borderRadius: "20px",
+  backgroundColor: "#f9f9f9"
 };
 
 export default RequestsPage;

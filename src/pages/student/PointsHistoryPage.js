@@ -177,7 +177,10 @@ function formatTimeLeft(ms) {
 const pageStyle = {
   marginLeft: "250px",
   padding: "30px",
-  width: "100%"
+  width: "100%",
+  minHeight: "100vh",
+  backgroundColor: "#d9d9d9",
+  color: "#030817"
 };
 
 const summaryContainer = {
@@ -188,18 +191,20 @@ const summaryContainer = {
 
 const boxStyle = {
   flex: 1,
-  border: "1px solid #ddd",
+   border: "1.5px solid #1a22383b",
   padding: "20px",
-  borderRadius: "10px",
-  backgroundColor: "white"
+  borderRadius: "16px",
+  backgroundColor: "#f9f9f9",boxShadow: "0 6px 16px rgba(3, 8, 23, 0.46)",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.08)"
 };
 
 const historyBox = {
-  border: "1px solid #ddd",
-  borderRadius: "10px",
+   border: "1.5px solid #1a22383b",
+  borderRadius: "16px",
   marginTop: "30px",
-  backgroundColor: "white",
-  overflow: "hidden"
+  backgroundColor: "#f9f9f9",
+  overflow: "hidden",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.46)",
 };
 
 const rowStyle = {
@@ -207,7 +212,8 @@ const rowStyle = {
   justifyContent: "space-between",
   alignItems: "center",
   padding: "18px 15px",
-  borderTop: "1px solid #eee"
+  borderTop: "1px solid #b9beca",
+  backgroundColor: "#ffffff"
 };
 
 const badgeStyle = {
@@ -220,7 +226,7 @@ const badgeStyle = {
 const emptyText = {
   padding: "15px",
   color: "#777",
-  borderTop: "1px solid #eee"
+  borderTop: "1px solid #b9beca"
 };
 
 export default PointsHistoryPage;

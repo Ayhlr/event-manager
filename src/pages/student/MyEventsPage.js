@@ -303,40 +303,48 @@ const completedRegistrations = registrations.filter((registration) => {
 const pageStyle = {
   marginLeft: "250px",
   padding: "30px",
-  width: "100%"
+  width: "100%",
+  minHeight: "100vh",
+  backgroundColor: "#d9d9d9",
+  color: "#030817"
 };
 
 const summaryBox = {
-  border: "1px solid #ddd",
+   border: "1.5px solid #1a22383b",
   padding: "20px",
-  borderRadius: "10px",
-  marginTop: "20px"
+  borderRadius: "16px",
+  marginTop: "20px",
+  backgroundColor: "#f9f9f9",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.46)",
 };
 
 const cardStyle = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  border: "1px solid #ddd",
+   border: "1.5px solid #1a22383b",
   padding: "20px",
-  borderRadius: "10px",
-  marginTop: "15px"
+  borderRadius: "16px",
+  marginTop: "15px",
+  backgroundColor: "#f9f9f9",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.46)",
 };
 
 const detailsStyle = {
-  border: "1px solid #ddd",
+  border: "1.5px solid #1a22383b",
   borderTop: "none",
   padding: "20px",
-  borderRadius: "0 0 10px 10px",
-  backgroundColor: "#f9f9f9",
+  borderRadius: "0 0 16px 16px",
+  backgroundColor: "#ffffff",
   marginBottom: "10px"
+  
 };
 
 const completedBadge = {
-  background: "black",
-  color: "white",
-  padding: "5px 10px",
-  borderRadius: "5px"
+  background: "#1a2238",
+  color: "#ffffff",
+  padding: "6px 12px",
+  borderRadius: "20px",
+  fontWeight: "bold"
 };
-
 export default MyEventsPage;

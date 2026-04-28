@@ -274,14 +274,15 @@ function ManageManagersPage() {
 }
 
 const pageStyle = {
-  padding: "10px 20px 30px 20px",
-  backgroundColor: "#f6f7f9",
+  padding: "30px",
+  backgroundColor: "#d9d9d9",
+  color: "#030817",
   minHeight: "100vh"
 };
 
 const headerStyle = {
   marginBottom: "30px",
-  borderBottom: "1px solid #d9d9d9",
+  borderBottom: "1.5px solid #1a2238",
   paddingBottom: "16px"
 };
 
@@ -289,60 +290,65 @@ const inputStyle = {
   width: "100%",
   maxWidth: "620px",
   padding: "12px 14px",
-  border: "1px solid #d9d9d9",
-  borderRadius: "8px",
+   border: "1.5px solid #1a22383b",
+  borderRadius: "12px",
   fontSize: "16px",
   outline: "none",
-  backgroundColor: "#fff"
+  backgroundColor: "#f9f9f9"
 };
 
 const statBoxStyle = {
   flex: 1,
-  border: "1px solid #d9d9d9",
-  backgroundColor: "#fff",
+   border: "1.5px solid #1a22383b",
+  backgroundColor: "#f9f9f9",
   padding: "18px",
-  borderRadius: "8px",
+  borderRadius: "16px",
   fontSize: "18px",
-  minWidth: "220px"
+  minWidth: "220px",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.08)"
 };
 
 const tableWrapperStyle = {
   marginTop: "22px",
-  border: "1px solid #d9d9d9",
-  borderRadius: "8px",
+  border: "1.5px solid #1a22383b",
+  borderRadius: "16px",
   overflow: "hidden",
-  backgroundColor: "#fff"
+  backgroundColor: "#f9f9f9",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.08)"
 };
 
 const thStyle = {
   padding: "16px 14px",
   textAlign: "left",
   fontSize: "16px",
-  borderBottom: "1px solid #d9d9d9"
+  borderBottom: "1.5px solid #1a2238",
+  backgroundColor: "#f9f9f9"
 };
 
 const tdStyle = {
   padding: "20px 14px",
   textAlign: "left",
-  borderBottom: "1px solid #d9d9d9",
-  fontSize: "16px"
+  borderBottom: "1px solid #b9beca",
+  fontSize: "16px",
+  backgroundColor: "#ffffff"
 };
 
 const statusStyle = {
-  border: "1px solid #d9d9d9",
+ border: "1.5px solid #1a22383b",
   padding: "6px 14px",
   display: "inline-block",
-  backgroundColor: "#fff",
-  borderRadius: "4px",
+  backgroundColor: "#ffffff",
+  color: "#030817",
+  borderRadius: "20px",
   fontWeight: "600"
 };
 
 const removeBtnStyle = {
-  backgroundColor: "#fff",
-  color: "#111",
-  border: "1px solid #d9d9d9",
+  backgroundColor: "#ffffff",
+  color: "#030817",
+   border: "1.5px solid #1a22383b",
   padding: "10px 16px",
-  borderRadius: "4px",
+  borderRadius: "10px",
   cursor: "pointer",
   fontWeight: "600"
 };

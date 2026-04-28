@@ -5,7 +5,8 @@ function ManagerLayout() {
   return (
     <div style={{ display: "flex" }}>
       <Sidebar />
-      <div style={{ flex: 1, marginLeft: "250px", padding: "20px" }}>
+
+      <div style={{ flex: 1, marginLeft: "250px" }}>
         <Outlet />
       </div>
     </div>

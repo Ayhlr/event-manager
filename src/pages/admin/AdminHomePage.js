@@ -258,7 +258,7 @@ function AdminDashboardPage() {
 
           <button
             style={wideButtonStyle}
-            onClick={() => navigate("/admin/managers")}
+            onClick={() => navigate("/admin/manage-managers")}
           >
             View All Managers →
           </button>
@@ -269,14 +269,15 @@ function AdminDashboardPage() {
 }
 
 const pageStyle = {
-  padding: "10px 20px 30px 20px",
-  backgroundColor: "#f6f7f9",
+  padding: "30px",
+  backgroundColor: "#d9d9d9",
+  color: "#030817",
   minHeight: "100vh"
 };
 
 const headerStyle = {
   marginBottom: "24px",
-  borderBottom: "1px solid #d9d9d9",
+  borderBottom: "1.5px solid #1a2238",
   paddingBottom: "16px"
 };
 
@@ -287,10 +288,11 @@ const statsGridStyle = {
 };
 
 const statCardStyle = {
-  border: "1px solid #ddd",
-  borderRadius: "8px",
-  backgroundColor: "white",
-  padding: "18px"
+  border: "1.5px solid #1a22383b",
+  borderRadius: "16px",
+  backgroundColor: "#f9f9f9",
+  padding: "18px",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.08)"
 };
 
 const statTopStyle = {
@@ -316,15 +318,16 @@ const activityGridStyle = {
 };
 
 const sectionCardStyle = {
-  border: "1px solid #ddd",
-  borderRadius: "8px",
-  backgroundColor: "white",
-  overflow: "hidden"
+  border: "1.5px solid #1a22383b",
+  borderRadius: "16px",
+  backgroundColor: "#f9f9f9",
+  overflow: "hidden",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.08)"
 };
 
 const sectionHeaderStyle = {
   padding: "16px",
-  borderBottom: "1px solid #ddd",
+  borderBottom: "1.5px solid #1a2238",
   display: "flex",
   flexDirection: "column",
   gap: "5px"
@@ -335,21 +338,23 @@ const sectionBodyStyle = {
 };
 
 const listItemStyle = {
-  border: "1px solid #ddd",
-  borderRadius: "6px",
+  border: "1.5px solid #1a22383b",
+  borderRadius: "12px",
   padding: "12px",
   marginBottom: "10px",
   display: "flex",
   justifyContent: "space-between",
-  gap: "15px"
+  gap: "15px",
+  backgroundColor: "#ffffff"
 };
 
 const wideButtonStyle = {
   width: "100%",
   padding: "10px",
-  border: "1px solid #111",
-  borderRadius: "6px",
-  backgroundColor: "white",
+  border: "1px solid #1a2238",
+  borderRadius: "10px",
+  backgroundColor: "#030817",
+  color: "#ffffff",
   cursor: "pointer",
   fontWeight: "600",
   marginTop: "10px"
@@ -358,19 +363,21 @@ const wideButtonStyle = {
 const thStyle = {
   textAlign: "left",
   padding: "14px",
-  borderBottom: "1px solid #ddd"
+  borderBottom: "1.5px solid #1a2238"
 };
 
 const tdStyle = {
   padding: "14px",
-  borderBottom: "1px solid #eee"
+  borderBottom: "1px solid #d0d0d0"
 };
 
 const statusStyle = {
-  border: "1px solid #ddd",
+  border: "1px solid #1a2238",
   padding: "5px 12px",
-  borderRadius: "5px",
-  backgroundColor: "white"
+  borderRadius: "20px",
+  backgroundColor: "#ffffff",
+  color: "#030817",
+  fontWeight: "600"
 };
 
 export default AdminDashboardPage;

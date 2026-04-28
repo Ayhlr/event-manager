@@ -36,8 +36,14 @@ function CategorySection({ selectedCategory, onCategoryClick }) {
   };
 
   return (
-    <div style={{ padding: "30px 20px" }}>
-      <h3 style={{ textAlign: "center", marginBottom: "30px" }}>
+    <div style={{ padding: "30px 20px", backgroundColor: "#d9d9d9" }}>
+      <h3
+        style={{
+          textAlign: "center",
+          marginBottom: "30px",
+          color: "#030817"
+        }}
+      >
         Explore by Category
       </h3>
 
@@ -71,24 +77,28 @@ function CategorySection({ selectedCategory, onCategoryClick }) {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: "white",
-                  border: isSelected ? "2px solid #333" : "1px solid #e5e5e5",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                  background: "#1a2238",
+color: "#ffffff",
+                  border: isSelected
+                    ? "2px solid #030817"
+                    : "1px solid #030817",
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.56)",
                   transition: "0.2s"
                 }}
               >
                 {getIcon(category.icon)}
               </div>
 
-             <span
-  style={{
-    marginTop: "12px",
-    fontSize: "16px",
-    fontWeight: "500"
-  }}
->
-  {category.name === "All Categories" ? "All" : category.name}
-</span>
+              <span
+                style={{
+                  marginTop: "12px",
+                  fontSize: "16px",
+                  fontWeight: "500",
+                  color: "#030817"
+                }}
+              >
+                {category.name === "All Categories" ? "All" : category.name}
+              </span>
             </div>
           );
         })}

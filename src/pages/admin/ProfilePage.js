@@ -342,45 +342,53 @@ function ProfilePage() {
 }
 
 const pageStyle = {
-  padding: "10px 20px 30px 20px",
-  backgroundColor: "#f6f7f9",
+  padding: "30px",
+  backgroundColor: "#d9d9d9",
+  color: "#030817",
   minHeight: "100vh"
 };
 
 const headerStyle = {
   marginBottom: "30px",
-  borderBottom: "1px solid #d9d9d9",
+  borderBottom: "1.5px solid #1a2238",
   paddingBottom: "16px"
 };
 
 const cardStyle = {
-  border: "1px solid #d9d9d9",
-  backgroundColor: "#fff",
-  borderRadius: "8px",
-  padding: "24px"
+  border: "1.5px solid #1a22383b",
+  backgroundColor: "#f9f9f9",
+  borderRadius: "16px",
+  padding: "24px",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.08)"
 };
 
 const avatarStyle = {
   width: "120px",
   height: "120px",
   margin: "0 auto 18px auto",
-  border: "2px solid #222",
+  border: "1.5px solid #1a22383b",
   borderRadius: "50%",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: "52px"
+  fontSize: "52px",
+  backgroundColor: "#ffffff",
+  color: "#030817"
 };
 
 const statRowStyle = {
   display: "flex",
   justifyContent: "space-between",
-  marginBottom: "12px",
-  color: "#4b5563"
+  marginBottom: "14px",
+  paddingBottom: "10px",
+  borderBottom: "1px solid #b9beca",
+  color: "#374151"
 };
 
 const labelStyle = {
-  fontWeight: "600"
+  fontWeight: "600",
+  color: "#030817"
 };
 
 export default ProfilePage;
+

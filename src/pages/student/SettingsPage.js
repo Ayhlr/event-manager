@@ -10,6 +10,18 @@ import { apiRequest } from "../../api";
 function SettingsPage() {
   const navigate = useNavigate();
 
+  const role = localStorage.getItem("role");
+  const isManager = role === "manager";
+
+  const pageStyle = {
+    marginLeft: isManager ? "0" : "250px",
+    padding: "30px",
+    width: "100%",
+    minHeight: "100vh",
+    backgroundColor: "#d9d9d9",
+    color: "#030817"
+  };
+
   const [user, setUser] = useState(null);
 
   const [notifPref, setNotifPref] = useState({
@@ -239,15 +251,9 @@ function SettingsPage() {
   if (loading) {
     return (
       <div style={{ display: "flex" }}>
-        <Sidebar />
+        {!isManager && <Sidebar />}
 
-        <div
-          style={{
-            marginLeft: "250px",
-            padding: "30px",
-            width: "100%"
-          }}
-        >
+        <div style={pageStyle}>
           <p>Loading settings...</p>
         </div>
       </div>
@@ -256,15 +262,9 @@ function SettingsPage() {
 
   return (
     <div style={{ display: "flex" }}>
-      <Sidebar />
+      {!isManager && <Sidebar />}
 
-      <div
-        style={{
-          marginLeft: "250px",
-          padding: "30px",
-          width: "100%"
-        }}
-      >
+      <div style={pageStyle}>
         <h2>Settings</h2>
 
         <p style={{ color: "#666" }}>
@@ -465,16 +465,20 @@ function SettingsPage() {
 }
 
 const boxStyle = {
-  border: "1px solid #ddd",
+  border: "1.5px solid #1a22383b",
   padding: "20px",
-  borderRadius: "10px",
-  marginTop: "20px"
+  borderRadius: "16px",
+  marginTop: "20px",
+  backgroundColor: "#f9f9f9",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.46)"
 };
 
 const activeStyle = {
-  background: "lightgreen",
-  padding: "3px 8px",
-  borderRadius: "5px"
+  background: "#d1e7dd",
+  color: "#0f5132",
+  padding: "5px 10px",
+  borderRadius: "20px",
+  fontWeight: "bold"
 };
 
 export default SettingsPage;

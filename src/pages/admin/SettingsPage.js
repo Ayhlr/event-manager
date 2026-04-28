@@ -438,35 +438,41 @@ function SettingsPage() {
 }
 
 const pageStyle = {
-  padding: "10px 20px 30px 20px",
-  backgroundColor: "#f6f7f9",
+  padding: "30px",
+  backgroundColor: "#d9d9d9",
+  color: "#030817",
   minHeight: "100vh"
 };
 
 const headerStyle = {
   marginBottom: "24px",
-  borderBottom: "1px solid #d9d9d9",
+  borderBottom: "1.5px solid #1a2238",
   paddingBottom: "16px"
 };
 
 const boxStyle = {
-  border: "1px solid #ddd",
+   border: "1.5px solid #1a22383b",
   padding: "20px",
-  borderRadius: "10px",
+  borderRadius: "16px",
   marginTop: "18px",
-  backgroundColor: "white"
+  backgroundColor: "#f9f9f9",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.08)"
 };
 
 const labelText = {
   marginBottom: "8px",
-  color: "#444"
+  color: "#374151",
+  fontWeight: "500"
 };
 
 const activeStyle = {
-  background: "lightgreen",
+  background: "#d1e7dd",
+  color: "#0f5132",
   padding: "4px 9px",
-  borderRadius: "5px",
-  fontSize: "13px"
+  borderRadius: "20px",
+  fontSize: "13px",
+  border: "1px solid #0f5132",
+  fontWeight: "600"
 };
 
 export default SettingsPage;

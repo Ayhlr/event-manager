@@ -159,29 +159,14 @@ function ManagerRequestsPage() {
           filteredRequests.map((request) => (
             <div key={request._id} style={cardStyle}>
               <div>
-                <div
-                  style={{
-                    fontSize: "20px",
-                    fontWeight: "700",
-                    marginBottom: "12px"
-                  }}
-                >
-                  {getName(request)}
+                <div style={nameStyle}>{getName(request)}</div>
+
+                <div style={infoTextStyle}>
+                  <strong>Email:</strong> {getEmail(request)}
                 </div>
 
-                <div
-                  style={{
-                    color: "#6b7280",
-                    marginBottom: "10px",
-                    fontSize: "17px"
-                  }}
-                >
-                  <strong style={{ color: "#6b7280" }}>Email:</strong>{" "}
-                  {getEmail(request)}
-                </div>
-
-                <div style={{ color: "#6b7280", fontSize: "17px" }}>
-                  <strong style={{ color: "#6b7280" }}>Requested:</strong>{" "}
+                <div style={infoTextStyle}>
+                  <strong>Requested:</strong>{" "}
                   {formatDate(request.date || request.createdAt)}
                 </div>
               </div>
@@ -191,14 +176,14 @@ function ManagerRequestsPage() {
                   style={approveBtnStyle}
                   onClick={() => openConfirmModal(request, "approved")}
                 >
-                  ◔ Approve
+                  Approve
                 </button>
 
                 <button
                   style={rejectBtnStyle}
                   onClick={() => openConfirmModal(request, "rejected")}
                 >
-                  ⊗ Reject
+                  Reject
                 </button>
               </div>
             </div>
@@ -243,14 +228,15 @@ function ManagerRequestsPage() {
 }
 
 const pageStyle = {
-  padding: "10px 20px 30px 20px",
-  backgroundColor: "#f6f7f9",
+  padding: "30px",
+  backgroundColor: "#d9d9d9",
+  color: "#030817",
   minHeight: "100vh"
 };
 
 const headerStyle = {
   marginBottom: "30px",
-  borderBottom: "1px solid #d9d9d9",
+  borderBottom: "1.5px solid #1a2238",
   paddingBottom: "16px"
 };
 
@@ -258,60 +244,75 @@ const inputStyle = {
   width: "100%",
   maxWidth: "620px",
   padding: "12px 14px",
-  border: "1px solid #d9d9d9",
-  borderRadius: "8px",
+  border: "1.5px solid #1a22383b",
+  borderRadius: "12px",
   fontSize: "16px",
   outline: "none",
-  backgroundColor: "#fff"
+  backgroundColor: "#f9f9f9"
 };
 
 const countBoxStyle = {
-  border: "1px solid #d9d9d9",
-  backgroundColor: "#fff",
+ border: "1.5px solid #1a22383b",
+  backgroundColor: "#f9f9f9",
   padding: "18px",
-  borderRadius: "8px",
+  borderRadius: "16px",
   marginTop: "18px",
   marginBottom: "20px",
-  fontSize: "18px"
+  fontSize: "18px",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.08)"
 };
 
 const cardStyle = {
-  border: "1px solid #d9d9d9",
-  backgroundColor: "#fff",
-  borderRadius: "8px",
+  border: "1.5px solid #1a22383b",
+  backgroundColor: "#f9f9f9",
+  borderRadius: "16px",
   padding: "24px",
   marginBottom: "16px",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  gap: "20px"
+  gap: "20px",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.08)"
 };
 
 const emptyStyle = {
-  border: "1px solid #d9d9d9",
-  backgroundColor: "#fff",
-  borderRadius: "8px",
+  border: "1.5px solid #1a22383b",
+  backgroundColor: "#f9f9f9",
+  borderRadius: "16px",
   padding: "24px",
-  color: "#6b7280"
+  color: "#6b7280",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.08)"
+};
+
+const nameStyle = {
+  fontSize: "20px",
+  fontWeight: "700",
+  marginBottom: "12px"
+};
+
+const infoTextStyle = {
+  color: "#6b7280",
+  marginBottom: "10px",
+  fontSize: "17px"
 };
 
 const approveBtnStyle = {
-  backgroundColor: "#000",
-  color: "#fff",
-  border: "1px solid #000",
+  backgroundColor: "#030817",
+  color: "#ffffff",
+ border: "1.5px solid #1a22383b",
   padding: "12px 22px",
-  borderRadius: "6px",
+  borderRadius: "10px",
   cursor: "pointer",
   fontWeight: "600",
   marginRight: "10px"
 };
 
 const rejectBtnStyle = {
-  backgroundColor: "#fff",
-  color: "#111",
-  border: "1px solid #d9d9d9",
+  backgroundColor: "#ffffff",
+  color: "#030817",
+  border: "1.5px solid #1a22383b",border: "1.5px solid #1a22383b",
   padding: "12px 22px",
-  borderRadius: "6px",
+  borderRadius: "10px",
   cursor: "pointer",
   fontWeight: "600"
 };

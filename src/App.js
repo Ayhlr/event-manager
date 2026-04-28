@@ -28,19 +28,36 @@ import AdminProfilePage from "./pages/admin/ProfilePage";
 import AdminSettingsPage from "./pages/admin/SettingsPage";
 import ManagerHomePage from "./pages/manager/ManagerHomePage";
 
-function AppContent() {
-  const location = useLocation();
+/* Logo animation imports */
+import { useState, useEffect } from "react";
+import LogoIntro from "./components/LogoIntro";
 
+function AppContent() {
+
+  const location = useLocation();
   const token = localStorage.getItem("token");
 
-const showNavbar =
-  location.pathname === "/" ||
-  location.pathname === "/login" ||
-  location.pathname === "/signup" ||
-  (location.pathname === "/home" && !token);
+  /* SHOW LOGO INTRO */
+  const [showIntro, setShowIntro] = useState(true);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setShowIntro(false);
+    }, 2500);
+  }, []);
+
+  const showNavbar =
+    location.pathname === "/" ||
+    location.pathname === "/login" ||
+    location.pathname === "/signup" ||
+    (location.pathname === "/home" && !token);
 
   return (
     <>
+      {/* Logo animation */}
+      {showIntro && <LogoIntro />}
+
+      {/* Navbar */}
       {showNavbar && <Navbar />}
 
       <Routes>

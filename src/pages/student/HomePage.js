@@ -13,11 +13,12 @@ import { apiRequest } from "../../api";
 function HomePage() {
   const navigate = useNavigate();
 
-const token = localStorage.getItem("token");
-const role = localStorage.getItem("role");
-const viewMode = localStorage.getItem("viewMode");
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+  const viewMode = localStorage.getItem("viewMode");
 
-const showSidebar = token && role === "student" && viewMode === "student";
+  const showSidebar = token && role === "student" && viewMode === "student";
+
   const [events, setEvents] = useState([]);
   const [joinedEvents, setJoinedEvents] = useState([]);
   const [requestedEvents, setRequestedEvents] = useState([]);
@@ -60,7 +61,8 @@ const showSidebar = token && role === "student" && viewMode === "student";
       const role = localStorage.getItem("role");
       const viewMode = localStorage.getItem("viewMode");
 
-if (!token || (role !== "student" && viewMode !== "student")) {        setJoinedEvents([]);
+      if (!token || role !== "student" || viewMode !== "student") {
+        setJoinedEvents([]);
         return;
       }
 
@@ -87,30 +89,31 @@ if (!token || (role !== "student" && viewMode !== "student")) {        setJoined
   };
 
   const fetchMyRequests = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+    try {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+      const viewMode = localStorage.getItem("viewMode");
 
-    if (!token || role !== "student") {
-      setRequestedEvents([]);
-      return;
+      if (!token || role !== "student" || viewMode !== "student") {
+        setRequestedEvents([]);
+        return;
+      }
+
+      const data = await apiRequest("/requests/my-requests");
+
+      const requestIds = data
+        .map((request) => {
+          if (request.event?._id) return request.event._id;
+          if (request.event) return request.event;
+          return null;
+        })
+        .filter(Boolean);
+
+      setRequestedEvents(requestIds);
+    } catch (err) {
+      console.log("Could not load organizer requests:", err.message);
     }
-
-    const data = await apiRequest("/requests/my-requests");
-
-    const requestIds = data
-      .map((request) => {
-        if (request.event?._id) return request.event._id;
-        if (request.event) return request.event;
-        return null;
-      })
-      .filter(Boolean);
-
-    setRequestedEvents(requestIds);
-  } catch (err) {
-    console.log("Could not load organizer requests:", err.message);
-  }
-};
+  };
 
   useEffect(() => {
     const loadPageData = async () => {
@@ -142,7 +145,7 @@ if (!token || (role !== "student" && viewMode !== "student")) {        setJoined
       return;
     }
 
-    if (role !== "student") { 
+    if (role !== "student" || viewMode !== "student") {
       navigate("/login");
       return;
     }
@@ -272,22 +275,22 @@ if (!token || (role !== "student" && viewMode !== "student")) {        setJoined
   }
 
   return (
-  <div
-    style={{
-      width: "100%",
-      minHeight: "100vh"
-    }}
-  >
-    {showSidebar && <Sidebar />}
-
     <div
       style={{
-        marginLeft: showSidebar ? "250px" : "0",
-        padding: "20px",
-        width: showSidebar ? "calc(100% - 250px)" : "100%",
-        boxSizing: "border-box"
+        width: "100%",
+        minHeight: "100vh"
       }}
     >
+      {showSidebar && <Sidebar />}
+
+      <div
+        style={{
+          marginLeft: showSidebar ? "250px" : "0",
+          padding: "20px",
+          width: showSidebar ? "calc(100% - 250px)" : "100%",
+          boxSizing: "border-box"
+        }}
+      >
         <HeroSection />
 
         <CategorySection

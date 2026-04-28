@@ -6,6 +6,18 @@ import Alert from "react-bootstrap/Alert";
 import { apiRequest } from "../../api";
 
 function ProfilePage() {
+  const role = localStorage.getItem("role");
+  const isManager = role === "manager";
+
+  const pageStyle = {
+    marginLeft: isManager ? "0" : "250px",
+    padding: "30px",
+    width: "100%",
+    minHeight: "100vh",
+    backgroundColor: "#d9d9d9",
+    color: "#030817"
+  };
+
   const [user, setUser] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -87,9 +99,9 @@ function ProfilePage() {
   };
 
   useEffect(() => {
-  loadPage();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []);
+    loadPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -168,7 +180,7 @@ function ProfilePage() {
   if (loading) {
     return (
       <div style={{ display: "flex" }}>
-        <Sidebar />
+        {!isManager && <Sidebar />}
         <div style={pageStyle}>
           <p>Loading profile...</p>
         </div>
@@ -178,7 +190,7 @@ function ProfilePage() {
 
   return (
     <div style={{ display: "flex" }}>
-      <Sidebar />
+      {!isManager && <Sidebar />}
 
       <div style={pageStyle}>
         <h2>Profile</h2>
@@ -215,20 +227,16 @@ function ProfilePage() {
 
             <h5>Quick Stats</h5>
 
-                {formData.role === "student" && (
-                  <>
-                    <p>⭐ Organizer Points: {organizerPoints}</p>
-                    <p>📅 Events Joined: {eventsJoined}</p>
-                  </>
-                )}
+            {formData.role === "student" && (
+              <>
+                <p>⭐ Organizer Points: {organizerPoints}</p>
+                <p>📅 Events Joined: {eventsJoined}</p>
+              </>
+            )}
 
-                {formData.role === "manager" && (
-                  <p>📅 Manager Account</p>
-                )}
+            {formData.role === "manager" && <p>📅 Manager Account</p>}
 
-                {formData.role === "admin" && (
-                  <p>🛠 Admin Account</p>
-                )}
+            {formData.role === "admin" && <p>🛠 Admin Account</p>}
           </div>
 
           <div style={boxStyle}>
@@ -315,22 +323,19 @@ function ProfilePage() {
   );
 }
 
-const pageStyle = {
-  marginLeft: "250px",
-  padding: "30px",
-  width: "100%"
-};
-
 const boxStyle = {
   flex: 1,
-  border: "1px solid #ddd",
+  border: "1.5px solid #1a22383b",
   padding: "20px",
-  borderRadius: "10px"
+  borderRadius: "16px",
+  backgroundColor: "#f9f9f9",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.46)"
 };
 
 const avatarStyle = {
   fontSize: "50px",
-  border: "2px solid #ddd",
+  border: "2px solid #1b243bb4",
+  backgroundColor: "#d9d9d9",
   borderRadius: "50%",
   width: "100px",
   height: "100px",

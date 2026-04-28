@@ -37,8 +37,10 @@ function EventCard({ event, onAttend, isJoined, isRequested }) {
         width: "320px",
         borderRadius: "12px",
         overflow: "hidden",
-        border: "1px solid #ddd",
-        background: "white",
+        border: "1px solid #000000",
+        background: "#030817",
+        color: "#d9d9d9",
+        boxShadow: "0 8px 18px rgba(0,0,0,0.25)",
         margin: "15px"
       }}
     >
@@ -57,7 +59,7 @@ function EventCard({ event, onAttend, isJoined, isRequested }) {
             width: "100%",
             height: "160px",
             objectFit: "cover",
-            background: "#ccc"
+            background: "#d9d9d9"
           }}
         />
 
@@ -66,8 +68,9 @@ function EventCard({ event, onAttend, isJoined, isRequested }) {
             position: "absolute",
             top: "10px",
             right: "10px",
-            background: "white",
-            border: "1px solid black",
+            background: "#d9d9d9",
+            color: "#030817",
+            border: "1px solid #000000",
             padding: "4px 10px",
             borderRadius: "10px",
             fontSize: "12px"
@@ -78,27 +81,33 @@ function EventCard({ event, onAttend, isJoined, isRequested }) {
       </div>
 
       <div style={{ padding: "15px" }}>
-        <h5 style={{ marginBottom: "5px" }}>{event.title}</h5>
+        <h5 style={{ marginBottom: "5px", color: "#d9d9d9" }}>
+          {event.title}
+        </h5>
 
-        <p style={{ fontSize: "13px", color: "#777", marginBottom: "10px" }}>
+        <p style={{ fontSize: "13px", color: "#d9d9d9", marginBottom: "10px" }}>
           by {organizerName}
         </p>
 
-        <p style={{ margin: "5px 0" }}>📍 {event.location}</p>
-        <p style={{ margin: "5px 0" }}>📅 {eventDate}</p>
-        <p style={{ margin: "5px 0" }}>⏰ {event.time || "No time"}</p>
+        <p style={{ margin: "5px 0", color: "#d9d9d9" }}>📍 {event.location}</p>
+        <p style={{ margin: "5px 0", color: "#d9d9d9" }}>📅 {eventDate}</p>
+        <p style={{ margin: "5px 0", color: "#d9d9d9" }}>
+          ⏰ {event.time || "No time"}
+        </p>
 
-        <p style={{ margin: "5px 0" }}>
+        <p style={{ margin: "5px 0", color: "#d9d9d9" }}>
           👥 {attending} / {capacity} attending
         </p>
 
         <div style={{ marginTop: "10px" }}>
-          <p style={{ fontSize: "12px", marginBottom: "5px" }}>Capacity</p>
+          <p style={{ fontSize: "12px", marginBottom: "5px", color: "#d9d9d9" }}>
+            Capacity
+          </p>
 
           <div
             style={{
               height: "6px",
-              background: "#eee",
+              background: "#d9d9d9",
               borderRadius: "10px"
             }}
           >
@@ -106,13 +115,13 @@ function EventCard({ event, onAttend, isJoined, isRequested }) {
               style={{
                 width: `${progress}%`,
                 height: "100%",
-                background: "black",
+                background: "#1a2238",
                 borderRadius: "10px"
               }}
             ></div>
           </div>
 
-          <p style={{ fontSize: "12px", textAlign: "right" }}>
+          <p style={{ fontSize: "12px", textAlign: "right", color: "#d9d9d9" }}>
             {spotsLeft} spots left
           </p>
         </div>
@@ -123,8 +132,10 @@ function EventCard({ event, onAttend, isJoined, isRequested }) {
             style={{
               flex: 1,
               padding: "8px",
-              border: "1px solid #ccc",
-              background: "white",
+              border: "1px solid #d9d9d9",
+              background:
+                "linear-gradient(135deg, #030817 0%, #1a2238 45%, #d9d9d9 100%)",
+              color: "#d9d9d9",
               borderRadius: "6px",
               cursor: "pointer"
             }}
@@ -133,32 +144,29 @@ function EventCard({ event, onAttend, isJoined, isRequested }) {
           </button>
 
           <button
-  onClick={() => onAttend(event._id)}
-  disabled={isJoined || isRequested || isFull}
-  style={{
-    flex: 1,
-    padding: "8px",
-    border: "none",
-    background: isJoined
-      ? "#777"
-      : isRequested
-      ? "#999"
-      : isFull
-      ? "#b00020"
-      : "black",
-    color: "white",
-    borderRadius: "6px",
-    cursor: isJoined || isRequested || isFull ? "not-allowed" : "pointer"
-  }}
->
-  {isJoined
-    ? "Joined"
-    : isRequested
-    ? "Request Sent"
-    : isFull
-    ? "Full"
-    : "Attend"}
-</button>
+            onClick={() => onAttend(event._id)}
+            disabled={isJoined || isRequested || isFull}
+            style={{
+              flex: 1,
+              padding: "8px",
+              border: "1px solid #d9d9d9",
+              background:
+                isJoined || isRequested || isFull
+                  ? "#1a2238"
+                  : "linear-gradient(135deg, #030817 0%, #1a2238 45%, #d9d9d9 100%)",
+              color: "#d9d9d9",
+              borderRadius: "6px",
+              cursor: isJoined || isRequested || isFull ? "not-allowed" : "pointer"
+            }}
+          >
+            {isJoined
+              ? "Joined"
+              : isRequested
+              ? "Request Sent"
+              : isFull
+              ? "Full"
+              : "Attend"}
+          </button>
         </div>
 
         {showDetails && (
@@ -166,7 +174,9 @@ function EventCard({ event, onAttend, isJoined, isRequested }) {
             style={{
               marginTop: "12px",
               padding: "10px",
-              background: "#f8f8f8",
+              background: "#d9d9d9",
+              color: "#030817",
+              border: "1px solid #000000",
               borderRadius: "8px",
               fontSize: "14px"
             }}
