@@ -10,6 +10,42 @@ function ApprovedEventsPage() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  const getEventDateTime = (event) => {
+    if (!event?.date) return null;
+
+    const date = new Date(event.date);
+
+    if (Number.isNaN(date.getTime())) return null;
+
+    if (event.time) {
+      const timeText = String(event.time).trim();
+      const timeMatch = timeText.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+
+      if (timeMatch) {
+        let hours = Number(timeMatch[1]);
+        const minutes = Number(timeMatch[2] || 0);
+        const period = timeMatch[3]?.toUpperCase();
+
+        if (period === "PM" && hours < 12) hours += 12;
+        if (period === "AM" && hours === 12) hours = 0;
+
+        date.setHours(hours, minutes, 0, 0);
+      } else {
+        date.setHours(23, 59, 59, 999);
+      }
+    } else {
+      date.setHours(23, 59, 59, 999);
+    }
+
+    return date;
+  };
+
+  const isUpcomingEvent = (event) => {
+    const eventDateTime = getEventDateTime(event);
+    if (!eventDateTime) return true;
+    return eventDateTime >= new Date();
+  };
+
   const fetchApprovedEvents = async () => {
     try {
       const data = await apiRequest("/events/admin/all");
@@ -42,10 +78,52 @@ function ApprovedEventsPage() {
     }
   };
 
-  const filteredEvents = events.filter(
-    (event) =>
-      event.title.toLowerCase().includes(search.toLowerCase()) ||
-      event.clubName.toLowerCase().includes(search.toLowerCase())
+  const filteredEvents = events.filter((event) => {
+    const title = String(event.title || "").toLowerCase();
+    const clubName = String(event.clubName || event.organizer || "").toLowerCase();
+    const searchText = search.toLowerCase();
+
+    return title.includes(searchText) || clubName.includes(searchText);
+  });
+
+  const upcomingEvents = filteredEvents.filter((event) => isUpcomingEvent(event));
+  const pastEvents = filteredEvents.filter((event) => !isUpcomingEvent(event));
+
+  const renderEventCard = (event, isPast) => (
+    <div key={event._id} style={cardStyle}>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <h4>
+          {event.title} {isPast && <span style={pastBadge}>Past Event</span>}
+        </h4>
+
+        <button onClick={() => openDeleteModal(event)} style={removeBtnStyle}>
+          Remove
+        </button>
+      </div>
+
+      <p>
+        <span style={categoryStyle}>{event.category}</span>{" "}
+        <span style={approvedBadge}>Approved</span>
+      </p>
+
+      <p>
+        {event.date ? new Date(event.date).toLocaleDateString() : "No date"}{" "}
+        • {event.time || "No time"} • {event.location}
+      </p>
+
+      <p>Capacity: {event.capacity}</p>
+
+      <p>
+        <strong>Manager:</strong> {event.clubName || event.organizer || "N/A"}
+      </p>
+
+      <p>
+        <strong>Approved on:</strong>{" "}
+        {event.approvedAt
+          ? new Date(event.approvedAt).toLocaleDateString()
+          : "N/A"}
+      </p>
+    </div>
   );
 
   if (loading) {
@@ -61,7 +139,7 @@ function ApprovedEventsPage() {
       <div style={headerStyle}>
         <h2 style={{ margin: 0 }}>Approved Events</h2>
         <p style={{ color: "#6b7280", marginTop: "8px" }}>
-          View and manage approved events
+          View upcoming approved events and past approved events
         </p>
       </div>
 
@@ -74,51 +152,25 @@ function ApprovedEventsPage() {
       />
 
       <div style={countBoxStyle}>
-        <strong>{filteredEvents.length}</strong> approved event(s)
+        <strong>{filteredEvents.length}</strong> approved event(s) |{" "}
+        <strong>{upcomingEvents.length}</strong> upcoming |{" "}
+        <strong>{pastEvents.length}</strong> past
       </div>
 
-      {filteredEvents.length === 0 ? (
-        <div style={emptyStyle}>No approved events found.</div>
+      <h3>Upcoming Approved Events</h3>
+
+      {upcomingEvents.length === 0 ? (
+        <div style={emptyStyle}>No upcoming approved events found.</div>
       ) : (
-        filteredEvents.map((event) => (
-          <div key={event._id} style={cardStyle}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <h4>{event.title}</h4>
+        upcomingEvents.map((event) => renderEventCard(event, false))
+      )}
 
-              <button
-                onClick={() => openDeleteModal(event)}
-                style={removeBtnStyle}
-              >
-                Remove
-              </button>
-            </div>
+      <h3 style={{ marginTop: "30px" }}>Past Approved Events</h3>
 
-            <p>
-              <span style={categoryStyle}>{event.category}</span>{" "}
-              <span style={approvedBadge}>Approved</span>
-            </p>
-
-            <p>
-              {event.date
-                ? new Date(event.date).toLocaleDateString()
-                : "No date"}{" "}
-              • {event.location}
-            </p>
-
-            <p>Capacity: {event.capacity}</p>
-
-            <p>
-              <strong>Manager:</strong> {event.clubName}
-            </p>
-
-            <p>
-              <strong>Approved on:</strong>{" "}
-              {event.approvedAt
-                ? new Date(event.approvedAt).toLocaleDateString()
-                : "N/A"}
-            </p>
-          </div>
-        ))
+      {pastEvents.length === 0 ? (
+        <div style={emptyStyle}>No past approved events found.</div>
+      ) : (
+        pastEvents.map((event) => renderEventCard(event, true))
       )}
 
       <Modal
@@ -131,9 +183,8 @@ function ApprovedEventsPage() {
         </Modal.Header>
 
         <Modal.Body>
-          Are you sure you want to remove{" "}
-          <strong>{selectedEvent?.title}</strong>? This will delete it from
-          everywhere.
+          Are you sure you want to remove <strong>{selectedEvent?.title}</strong>?
+          This will delete it from everywhere.
         </Modal.Body>
 
         <Modal.Footer>
@@ -170,14 +221,14 @@ const inputStyle = {
   padding: "12px 14px",
   width: "320px",
   marginBottom: "20px",
-   border: "1.5px solid #1a22383b",
+  border: "1.5px solid #1a22383b",
   borderRadius: "12px",
   backgroundColor: "#f9f9f9",
   outline: "none"
 };
 
 const countBoxStyle = {
- border: "1.5px solid #1a22383b",
+  border: "1.5px solid #1a22383b",
   backgroundColor: "#f9f9f9",
   padding: "18px",
   borderRadius: "16px",
@@ -186,7 +237,7 @@ const countBoxStyle = {
 };
 
 const cardStyle = {
-   border: "1.5px solid #1a22383b",
+  border: "1.5px solid #1a22383b",
   backgroundColor: "#f9f9f9",
   padding: "20px",
   marginBottom: "15px",
@@ -195,12 +246,13 @@ const cardStyle = {
 };
 
 const emptyStyle = {
-   border: "1.5px solid #1a22383b",
+  border: "1.5px solid #1a22383b",
   backgroundColor: "#f9f9f9",
   borderRadius: "16px",
   padding: "24px",
   color: "#6b7280",
-  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.08)"
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.08)",
+  marginBottom: "15px"
 };
 
 const removeBtnStyle = {
@@ -223,10 +275,20 @@ const categoryStyle = {
 const approvedBadge = {
   backgroundColor: "#d1e7dd",
   color: "#0f5132",
-   border: "1.5px solid #1a22383b",
+  border: "1.5px solid #1a22383b",
   padding: "4px 10px",
   borderRadius: "20px",
   fontWeight: "600"
+};
+
+const pastBadge = {
+  backgroundColor: "#1a2238",
+  color: "#ffffff",
+  border: "1.5px solid #1a22383b",
+  padding: "4px 10px",
+  borderRadius: "20px",
+  fontWeight: "600",
+  fontSize: "13px"
 };
 
 export default ApprovedEventsPage;

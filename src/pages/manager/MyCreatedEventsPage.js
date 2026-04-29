@@ -31,6 +31,42 @@ function MyCreatedEventsPage() {
     description: ""
   });
 
+  const getEventDateTime = (event) => {
+    if (!event?.date) return null;
+
+    const date = new Date(event.date);
+
+    if (Number.isNaN(date.getTime())) return null;
+
+    if (event.time) {
+      const timeText = String(event.time).trim();
+      const timeMatch = timeText.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+
+      if (timeMatch) {
+        let hours = Number(timeMatch[1]);
+        const minutes = Number(timeMatch[2] || 0);
+        const period = timeMatch[3]?.toUpperCase();
+
+        if (period === "PM" && hours < 12) hours += 12;
+        if (period === "AM" && hours === 12) hours = 0;
+
+        date.setHours(hours, minutes, 0, 0);
+      } else {
+        date.setHours(23, 59, 59, 999);
+      }
+    } else {
+      date.setHours(23, 59, 59, 999);
+    }
+
+    return date;
+  };
+
+  const isUpcomingEvent = (event) => {
+    const eventDateTime = getEventDateTime(event);
+    if (!eventDateTime) return true;
+    return eventDateTime >= new Date();
+  };
+
   const fetchMyEvents = async () => {
     try {
       setError("");
@@ -74,6 +110,11 @@ function MyCreatedEventsPage() {
   };
 
   const openEdit = (event) => {
+    if (!isUpcomingEvent(event)) {
+      alert("Past events cannot be edited.");
+      return;
+    }
+
     if (event.status !== "pending") {
       alert("Only pending events can be edited.");
       return;
@@ -117,9 +158,75 @@ function MyCreatedEventsPage() {
     }
   };
 
+  const upcomingEvents = events.filter((event) => isUpcomingEvent(event));
+  const pastEvents = events.filter((event) => !isUpcomingEvent(event));
+
   const totalEvents = events.length;
   const approvedEvents = events.filter((e) => e.status === "approved").length;
   const pendingEvents = events.filter((e) => e.status === "pending").length;
+  const pastEventsCount = pastEvents.length;
+
+  const renderEventCard = (event, isPast) => {
+    const attending = Number(event.attendingCount || 0);
+    const capacity = Number(event.capacity || 0);
+
+    return (
+      <Card key={event._id} style={eventCard}>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div>
+            <h5>
+              {event.title} <span style={categoryStyle}>{event.category}</span>{" "}
+              {isPast && <span style={pastStyle}>Past Event</span>}
+            </h5>
+
+            <p>
+              {event.date ? new Date(event.date).toLocaleDateString() : "No date"}{" "}
+              • {event.time || "No time"} • {event.location}
+            </p>
+
+            <Badge
+              bg={
+                event.status === "approved"
+                  ? "success"
+                  : event.status === "rejected"
+                  ? "danger"
+                  : "warning"
+              }
+            >
+              {event.status}
+            </Badge>
+          </div>
+
+          <div>
+            {attending} / {capacity}
+          </div>
+        </div>
+
+        <ProgressBar
+          now={percent(attending, capacity)}
+          style={{ margin: "10px 0" }}
+        />
+
+        <div style={{ display: "flex", gap: "10px" }}>
+          <Button variant="dark" onClick={() => openDetails(event)}>
+            Details
+          </Button>
+
+          <Button
+            variant="outline-dark"
+            onClick={() => openEdit(event)}
+            disabled={isPast || event.status !== "pending"}
+          >
+            Edit
+          </Button>
+
+          <Button variant="outline-danger" onClick={() => openDelete(event)}>
+            Delete
+          </Button>
+        </div>
+      </Card>
+    );
+  };
 
   if (loading) {
     return <p style={{ padding: "20px" }}>Loading events...</p>;
@@ -128,7 +235,9 @@ function MyCreatedEventsPage() {
   return (
     <div style={pageStyle}>
       <h2>My Created Events</h2>
-      <p style={{ color: "#666" }}>Manage all your created events</p>
+      <p style={{ color: "#666" }}>
+        Manage your upcoming events and view your past created events
+      </p>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
@@ -147,79 +256,185 @@ function MyCreatedEventsPage() {
           <small>Pending Events</small>
           <h3>{pendingEvents}</h3>
         </Card>
+
+        <Card style={summaryCard}>
+          <small>Past Events</small>
+          <h3>{pastEventsCount}</h3>
+        </Card>
       </div>
 
-      <h4>Created Events</h4>
+      <h4>Upcoming Created Events</h4>
 
-      {events.length === 0 ? (
-        <p>No created events yet.</p>
+      {upcomingEvents.length === 0 ? (
+        <p>No upcoming created events.</p>
       ) : (
-        events.map((event) => {
-          const attending = Number(event.attendingCount || 0);
-          const capacity = Number(event.capacity || 0);
-
-          return (
-            <Card key={event._id} style={eventCard}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <div>
-                  <h5>
-                    {event.title}{" "}
-                    <span style={categoryStyle}>{event.category}</span>
-                  </h5>
-
-                  <p>
-                    {event.date
-                      ? new Date(event.date).toLocaleDateString()
-                      : "No date"}{" "}
-                    • {event.location}
-                  </p>
-
-                  <Badge
-                    bg={
-                      event.status === "approved"
-                        ? "success"
-                        : event.status === "rejected"
-                        ? "danger"
-                        : "warning"
-                    }
-                  >
-                    {event.status}
-                  </Badge>
-                </div>
-
-                <div>
-                  {attending} / {capacity}
-                </div>
-              </div>
-
-              <ProgressBar
-                now={percent(attending, capacity)}
-                style={{ margin: "10px 0" }}
-              />
-
-              <div style={{ display: "flex", gap: "10px" }}>
-                <Button variant="dark" onClick={() => openDetails(event)}>
-                  Details
-                </Button>
-
-                <Button
-                  variant="outline-dark"
-                  onClick={() => openEdit(event)}
-                  disabled={event.status !== "pending"}
-                >
-                  Edit
-                </Button>
-
-                <Button variant="outline-danger" onClick={() => openDelete(event)}>
-                  Delete
-                </Button>
-              </div>
-            </Card>
-          );
-        })
+        upcomingEvents.map((event) => renderEventCard(event, false))
       )}
 
-      {/* keep all your modals the same here */}
+      <h4 style={{ marginTop: "30px" }}>Past Created Events</h4>
+
+      {pastEvents.length === 0 ? (
+        <p>No past created events.</p>
+      ) : (
+        pastEvents.map((event) => renderEventCard(event, true))
+      )}
+
+      <Modal show={showDetails} onHide={() => setShowDetails(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{selectedEvent?.title}</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <p>{selectedEvent?.description || "No description available."}</p>
+          <p>
+            <strong>Date:</strong>{" "}
+            {selectedEvent?.date
+              ? new Date(selectedEvent.date).toLocaleDateString()
+              : "No date"}
+          </p>
+          <p>
+            <strong>Time:</strong> {selectedEvent?.time || "No time"}
+          </p>
+          <p>
+            <strong>Location:</strong> {selectedEvent?.location || "No location"}
+          </p>
+          <p>
+            <strong>Capacity:</strong> {selectedEvent?.capacity || 0}
+          </p>
+          <p>
+            <strong>Status:</strong> {selectedEvent?.status}
+          </p>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="dark" onClick={() => setShowDetails(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showDelete} onHide={() => setShowDelete(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete Event</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          Are you sure you want to delete <strong>{selectedEvent?.title}</strong>?
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDelete(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDelete}>
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showEdit} onHide={() => setShowEdit(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Event</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-2">
+              <Form.Label>Title</Form.Label>
+              <Form.Control
+                name="title"
+                value={editForm.title}
+                onChange={handleEditChange}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-2">
+              <Form.Label>Club Name</Form.Label>
+              <Form.Control
+                name="clubName"
+                value={editForm.clubName}
+                onChange={handleEditChange}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-2">
+              <Form.Label>Category</Form.Label>
+              <Form.Control
+                name="category"
+                value={editForm.category}
+                onChange={handleEditChange}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-2">
+              <Form.Label>Date</Form.Label>
+              <Form.Control
+                type="date"
+                name="date"
+                value={editForm.date}
+                onChange={handleEditChange}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-2">
+              <Form.Label>Time</Form.Label>
+              <Form.Control
+                name="time"
+                value={editForm.time}
+                onChange={handleEditChange}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-2">
+              <Form.Label>Location</Form.Label>
+              <Form.Control
+                name="location"
+                value={editForm.location}
+                onChange={handleEditChange}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-2">
+              <Form.Label>Capacity</Form.Label>
+              <Form.Control
+                type="number"
+                name="capacity"
+                value={editForm.capacity}
+                onChange={handleEditChange}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-2">
+              <Form.Label>Image URL</Form.Label>
+              <Form.Control
+                name="image"
+                value={editForm.image}
+                onChange={handleEditChange}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-2">
+              <Form.Label>Description</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                name="description"
+                value={editForm.description}
+                onChange={handleEditChange}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEdit(false)}>
+            Cancel
+          </Button>
+          <Button variant="dark" onClick={handleUpdate}>
+            Save Changes
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
@@ -234,12 +449,14 @@ const pageStyle = {
 const summaryContainer = {
   display: "flex",
   gap: "20px",
-  marginBottom: "30px"
+  marginBottom: "30px",
+  flexWrap: "wrap"
 };
 
 const summaryCard = {
   padding: "18px",
   flex: 1,
+  minWidth: "160px",
   backgroundColor: "#f9f9f9",
   color: "#030817",
   border: "1.5px solid #1a2238",
@@ -263,6 +480,16 @@ const categoryStyle = {
   marginLeft: "10px",
   borderRadius: "20px",
   fontSize: "14px"
+};
+
+const pastStyle = {
+  border: "1px solid #1a2238",
+  padding: "3px 8px",
+  marginLeft: "10px",
+  borderRadius: "20px",
+  fontSize: "14px",
+  backgroundColor: "#1a2238",
+  color: "#ffffff"
 };
 
 export default MyCreatedEventsPage;

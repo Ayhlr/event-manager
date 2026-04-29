@@ -64,11 +64,54 @@ function MyEventsPage() {
     return registration._id || registration.registrationId;
   };
 
+  const getEventDateTime = (event) => {
+    if (!event?.date) return null;
+
+    const date = new Date(event.date);
+
+    if (Number.isNaN(date.getTime())) return null;
+
+    if (event.time) {
+      const timeText = String(event.time).trim();
+      const timeMatch = timeText.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+
+      if (timeMatch) {
+        let hours = Number(timeMatch[1]);
+        const minutes = Number(timeMatch[2] || 0);
+        const period = timeMatch[3]?.toUpperCase();
+
+        if (period === "PM" && hours < 12) hours += 12;
+        if (period === "AM" && hours === 12) hours = 0;
+
+        date.setHours(hours, minutes, 0, 0);
+      } else {
+        date.setHours(23, 59, 59, 999);
+      }
+    } else {
+      date.setHours(23, 59, 59, 999);
+    }
+
+    return date;
+  };
+
+  const isUpcomingEvent = (event) => {
+    const eventDateTime = getEventDateTime(event);
+    if (!eventDateTime) return true;
+    return eventDateTime >= new Date();
+  };
+
   const handleToggleDetails = (registrationId) => {
     setOpenEvent(openEvent === registrationId ? null : registrationId);
   };
 
   const openUnenrollModal = (registration) => {
+    const event = getEventFromRegistration(registration);
+
+    if (!isUpcomingEvent(event)) {
+      alert("You cannot unenroll from a past event.");
+      return;
+    }
+
     setSelectedRegistration(registration);
     setShowUnenrollModal(true);
   };
@@ -99,43 +142,17 @@ function MyEventsPage() {
       setActionLoading(false);
     }
   };
- 
 
-const getEventDateTime = (event) => {
-  if (!event?.date) return null;
+  const upcomingRegistrations = registrations.filter((registration) => {
+    const event = getEventFromRegistration(registration);
+    return isUpcomingEvent(event);
+  });
 
-  const date = new Date(event.date);
+  const completedRegistrations = registrations.filter((registration) => {
+    const event = getEventFromRegistration(registration);
+    return !isUpcomingEvent(event);
+  });
 
-  if (event.time) {
-    const [hours, minutes] = event.time.split(":");
-    date.setHours(Number(hours));
-    date.setMinutes(Number(minutes));
-    date.setSeconds(0);
-    date.setMilliseconds(0);
-  } else {
-    date.setHours(23, 59, 0, 0);
-  }
-
-  return date;
-};
-
-const upcomingRegistrations = registrations.filter((registration) => {
-  const event = getEventFromRegistration(registration);
-  const eventDateTime = getEventDateTime(event);
-
-  if (!eventDateTime) return true;
-
-  return eventDateTime >= new Date();
-});
-
-const completedRegistrations = registrations.filter((registration) => {
-  const event = getEventFromRegistration(registration);
-  const eventDateTime = getEventDateTime(event);
-
-  if (!eventDateTime) return false;
-
-  return eventDateTime < new Date();
-});
   if (loading) {
     return (
       <div style={{ display: "flex" }}>
@@ -153,7 +170,9 @@ const completedRegistrations = registrations.filter((registration) => {
 
       <div style={pageStyle}>
         <h2>My Events</h2>
-        <p style={{ color: "#666" }}>Track your joined and completed events</p>
+        <p style={{ color: "#666" }}>
+          Track the events you joined. Past events only show here if you joined them.
+        </p>
 
         {error && <p style={{ color: "red" }}>{error}</p>}
 
@@ -162,7 +181,7 @@ const completedRegistrations = registrations.filter((registration) => {
 
           <div style={{ display: "flex", gap: "50px", marginTop: "15px" }}>
             <p>Upcoming Events: {upcomingRegistrations.length}</p>
-            <p>Completed Events: {completedRegistrations.length}</p>
+            <p>Past Events: {completedRegistrations.length}</p>
           </div>
         </div>
 
@@ -237,10 +256,10 @@ const completedRegistrations = registrations.filter((registration) => {
           })
         )}
 
-        <h4 style={{ marginTop: "30px" }}>Completed Events</h4>
+        <h4 style={{ marginTop: "30px" }}>Past Events I Attended</h4>
 
         {completedRegistrations.length === 0 ? (
-          <p style={{ color: "#666" }}>No completed events yet.</p>
+          <p style={{ color: "#666" }}>No past attended events yet.</p>
         ) : (
           completedRegistrations.map((registration) => {
             const event = getEventFromRegistration(registration);
@@ -252,17 +271,25 @@ const completedRegistrations = registrations.filter((registration) => {
               event?.clubName ||
               "Event Manager";
 
+            const eventDate = event?.date
+              ? new Date(event.date).toLocaleDateString()
+              : "No date";
+
             return (
               <div key={registrationId} style={cardStyle}>
                 <div>
                   <h5>{event.title}</h5>
                   <p>{organizerName}</p>
+                  <p>
+                    📅 {eventDate} | ⏰ {event.time || "No time"} | 📍{" "}
+                    {event.location || "No location"}
+                  </p>
                   <p style={{ color: "#888", fontSize: "14px" }}>
                     You joined as attendee
                   </p>
                 </div>
 
-                <span style={completedBadge}>Completed</span>
+                <span style={completedBadge}>Past Event</span>
               </div>
             );
           })
@@ -310,24 +337,24 @@ const pageStyle = {
 };
 
 const summaryBox = {
-   border: "1.5px solid #1a22383b",
+  border: "1.5px solid #1a22383b",
   padding: "20px",
   borderRadius: "16px",
   marginTop: "20px",
   backgroundColor: "#f9f9f9",
-  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.46)",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.46)"
 };
 
 const cardStyle = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-   border: "1.5px solid #1a22383b",
+  border: "1.5px solid #1a22383b",
   padding: "20px",
   borderRadius: "16px",
   marginTop: "15px",
   backgroundColor: "#f9f9f9",
-  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.46)",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.46)"
 };
 
 const detailsStyle = {
@@ -337,7 +364,6 @@ const detailsStyle = {
   borderRadius: "0 0 16px 16px",
   backgroundColor: "#ffffff",
   marginBottom: "10px"
-  
 };
 
 const completedBadge = {
@@ -347,4 +373,5 @@ const completedBadge = {
   borderRadius: "20px",
   fontWeight: "bold"
 };
+
 export default MyEventsPage;

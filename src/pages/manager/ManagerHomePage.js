@@ -13,6 +13,20 @@ function ManagerHomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const getEventDate = (date) => {
+    if (!date) return null;
+
+    const parsedDate = new Date(date);
+
+    if (isNaN(parsedDate)) return null;
+
+    parsedDate.setHours(0, 0, 0, 0);
+    return parsedDate;
+  };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const fetchEvents = async () => {
     try {
       setLoading(true);
@@ -52,6 +66,9 @@ function ManagerHomePage() {
     const category = String(event?.category || "");
     const stadium = String(event?.stadium || event?.location || "");
 
+    const eventDate = getEventDate(event.date);
+    const isUpcoming = eventDate && eventDate >= today;
+
     const matchesSearch =
       title.includes(search) ||
       location.includes(search) ||
@@ -65,7 +82,7 @@ function ManagerHomePage() {
     const matchesStadium =
       selectedStadium === "All Stadiums" || stadium === selectedStadium;
 
-    return matchesSearch && matchesCategory && matchesStadium;
+    return isUpcoming && matchesSearch && matchesCategory && matchesStadium;
   });
 
   if (loading) {

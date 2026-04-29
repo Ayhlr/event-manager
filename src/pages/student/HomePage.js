@@ -39,17 +39,53 @@ function HomePage() {
   const [requestMessage, setRequestMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  const getEventDateTime = (event) => {
+    if (!event?.date) return null;
+
+    const date = new Date(event.date);
+
+    if (Number.isNaN(date.getTime())) return null;
+
+    if (event.time) {
+      const timeText = String(event.time).trim();
+      const timeMatch = timeText.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+
+      if (timeMatch) {
+        let hours = Number(timeMatch[1]);
+        const minutes = Number(timeMatch[2] || 0);
+        const period = timeMatch[3]?.toUpperCase();
+
+        if (period === "PM" && hours < 12) hours += 12;
+        if (period === "AM" && hours === 12) hours = 0;
+
+        date.setHours(hours, minutes, 0, 0);
+      } else {
+        date.setHours(23, 59, 59, 999);
+      }
+    } else {
+      date.setHours(23, 59, 59, 999);
+    }
+
+    return date;
+  };
+
+  const isUpcomingEvent = (event) => {
+    const eventDateTime = getEventDateTime(event);
+    if (!eventDateTime) return true;
+    return eventDateTime >= new Date();
+  };
+
   const fetchEvents = async () => {
     try {
       setError("");
 
       const data = await apiRequest("/events");
 
-      const approvedEvents = data.filter(
-        (event) => event.status === "approved"
+      const approvedUpcomingEvents = data.filter(
+        (event) => event.status === "approved" && isUpcomingEvent(event)
       );
 
-      setEvents(approvedEvents);
+      setEvents(approvedUpcomingEvents);
     } catch (err) {
       setError(err.message);
     }
@@ -157,6 +193,11 @@ function HomePage() {
       return;
     }
 
+    if (!isUpcomingEvent(selectedEvent)) {
+      alert("This event has already passed.");
+      return;
+    }
+
     if (joinedEvents.includes(eventId)) {
       alert("You already joined this event.");
       return;
@@ -214,6 +255,8 @@ function HomePage() {
           eventId: selectedEventId,
           message: requestMessage
         });
+
+        await fetchMyRequests();
 
         handleCloseModal();
         setSuccessMessage(
@@ -329,6 +372,7 @@ function HomePage() {
                 event={event}
                 onAttend={handleAttendClick}
                 isJoined={joinedEvents.includes(event._id)}
+                isRequested={requestedEvents.includes(event._id)}
               />
             ))
           ) : (
@@ -339,7 +383,7 @@ function HomePage() {
                 gridColumn: "1 / -1"
               }}
             >
-              No events found.
+              No upcoming events found.
             </p>
           )}
         </div>
