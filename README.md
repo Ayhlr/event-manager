@@ -68,7 +68,9 @@ JWT_SECRET=your_secret_key
 
 Note:  
 The `.env` file is not uploaded to GitHub for security reasons.
-
+The project uses MongoDB Atlas as the cloud database.
+For security reasons, the real MONGO_URI is not included in GitHub.
+The database can be connected by creating a .env file inside the backend folder and adding the MongoDB Atlas connection string.
 ---
 
 ## Database
