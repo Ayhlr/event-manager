@@ -57,29 +57,30 @@ Frontend runs on:
 http://localhost:3000
 
 ---
-
 ## Environment Variables
 
-Create a `.env` file inside the backend folder and add:
+Create a .env file inside the backend folder and add:
 
-MONGO_URI=your_mongodb_atlas_connection_string  
-PORT=5001  
-JWT_SECRET=your_secret_key  
+MONGO_URI=your_mongodb_atlas_connection_string
+PORT=5001
+JWT_SECRET=your_secret_key
 
-Note:  
-The `.env` file is not uploaded to GitHub for security reasons.
-The project uses MongoDB Atlas as the cloud database.
-For security reasons, the real MONGO_URI is not included in GitHub.
-The database can be connected by creating a .env file inside the backend folder and adding the MongoDB Atlas connection string.
----
+Note:
+The .env file is not uploaded to GitHub for security reasons. The actual MONGO_URI is provided privately for grading/testing purposes.
 
-## Database
 
-This project uses **MongoDB Atlas (cloud database).**
+Database
 
-The database is hosted online using MongoDB Atlas, so no local database export is required.
+This project uses MongoDB Atlas as a cloud database.
 
-The connection is done using the `MONGO_URI` stored inside the `.env` file.
+The database is hosted online, so no local database export is required.
+
+MongoDB Atlas Network Access has been configured to allow global access using:
+0.0.0.0/0
+
+This allows the application to connect from any machine during testing.
+
+The database connection is handled through the MONGO_URI stored in the .env file.
 
 ---
 
