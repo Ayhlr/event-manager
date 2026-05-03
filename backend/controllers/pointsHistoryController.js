@@ -13,10 +13,10 @@ const getMyPointsHistory = async (req, res) => {
       const createdAt = new Date(record.createdAt);
 
       // REAL VERSION: 48 hours
-      //const earnedAt = new Date(createdAt.getTime() + 48 * 60 * 60 * 1000);
+      const earnedAt = new Date(createdAt.getTime() + 48 * 60 * 60 * 1000);
 
       // TEST VERSION: 1 minute
-       const earnedAt = new Date(createdAt.getTime() + 1 * 60 * 1000);
+       //const earnedAt = new Date(createdAt.getTime() + 1 * 60 * 1000);
 
       if (record.status === "pending" && now >= earnedAt) {
         const user = await User.findById(record.user);
@@ -40,10 +40,10 @@ const getMyPointsHistory = async (req, res) => {
       const createdAt = new Date(record.createdAt);
 
       // REAL VERSION: 48 hours
-      //const earnedAt = new Date(createdAt.getTime() + 48 * 60 * 60 * 1000);
+      const earnedAt = new Date(createdAt.getTime() + 48 * 60 * 60 * 1000);
 
       // TEST VERSION: 1 minute
-       const earnedAt = new Date(createdAt.getTime() + 1 * 60 * 1000);
+       //const earnedAt = new Date(createdAt.getTime() + 1 * 60 * 1000);
 
       const timeLeftMs = earnedAt - new Date();
 

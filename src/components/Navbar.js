@@ -3,6 +3,16 @@ import Button from "react-bootstrap/Button";
 import logo from "../assets/logo.gif";
 
 function Navbar() {
+ const authButtonStyle = {
+  backgroundColor: "#d9d9d9",
+  color: "#030817",
+  border: "1px solid #d9d9d9",
+  borderRadius: "12px",
+  padding: "8px 20px",
+  fontWeight: "600",
+  boxShadow: "0 3px 8px rgba(217, 217, 217, 0.18)"
+};
+
   return (
     <div
       style={{
@@ -26,35 +36,25 @@ function Navbar() {
           }}
         />
 
-        <h3 style={{ margin: 0, color: "#d9d9d9", fontStyle: "italic", letterSpacing: "1px" }}>
+        <h3
+          style={{
+            margin: 0,
+            color: "#d9d9d9",
+            fontStyle: "italic",
+            letterSpacing: "1px"
+          }}
+        >
           Event-it
         </h3>
       </div>
 
-      <div>
-        <Link to="/login">
-          <Button
-            style={{
-              marginRight: "10px",
-              backgroundColor: "#030817",
-              color: "#d9d9d9",
-              border: "none"
-            }}
-          >
-            Login
-          </Button>
+      <div style={{ display: "flex", gap: "12px" }}>
+        <Link to="/login" style={{ textDecoration: "none" }}>
+          <Button style={authButtonStyle}>Login</Button>
         </Link>
 
-        <Link to="/signup">
-          <Button
-            style={{
-              backgroundColor: "#030817",
-              color: "#d9d9d9",
-              border: "none"
-            }}
-          >
-            Sign Up
-          </Button>
+        <Link to="/signup" style={{ textDecoration: "none" }}>
+          <Button style={authButtonStyle}>Sign Up</Button>
         </Link>
       </div>
     </div>

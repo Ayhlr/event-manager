@@ -94,7 +94,7 @@ function ManagerHomePage() {
   }
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: "0px" }}>
       <HeroSection />
 
       <CategorySection

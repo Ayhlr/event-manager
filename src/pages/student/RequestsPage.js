@@ -10,6 +10,10 @@ function RequestsPage() {
 
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
+
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedDetailsRequest, setSelectedDetailsRequest] = useState(null);
+
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -64,6 +68,16 @@ function RequestsPage() {
     setShowCancelModal(false);
   };
 
+  const openDetailsModal = (request) => {
+    setSelectedDetailsRequest(request);
+    setShowDetailsModal(true);
+  };
+
+  const closeDetailsModal = () => {
+    setSelectedDetailsRequest(null);
+    setShowDetailsModal(false);
+  };
+
   const handleCancelRequest = async () => {
     if (!selectedRequest) return;
 
@@ -104,14 +118,43 @@ function RequestsPage() {
     };
   };
 
+  const getEvent = (request) => {
+    return request.event || request.eventId || {};
+  };
+
   const getEventTitle = (request) => {
-    return request.event?.title || request.eventName || "Untitled Event";
+    const event = getEvent(request);
+    return event.title || request.eventName || "Untitled Event";
   };
 
   const getClubName = (request) => {
-    return request.event?.clubName || request.clubName || "No club";
+    const event = getEvent(request);
+    return event.clubName || request.clubName || "No club";
   };
 
+  const getEventCategory = (request) => {
+    const event = getEvent(request);
+    return event.category || "No category";
+  };
+
+  const getEventLocation = (request) => {
+    const event = getEvent(request);
+    return event.location || "No location";
+  };
+
+  const getEventDate = (request) => {
+    const event = getEvent(request);
+    return event.date ? formatDate(event.date) : "No date";
+  };
+
+  const getEventTime = (request) => {
+    const event = getEvent(request);
+    return event.time || "No time";
+  };
+
+  const getEventPoints = () => {
+  return 50;
+};
   const formatDate = (date) => {
     if (!date) return "No date";
     return new Date(date).toLocaleDateString();
@@ -157,13 +200,9 @@ function RequestsPage() {
                     <h5>{getEventTitle(request)}</h5>
                     <p>{getClubName(request)}</p>
 
-                    <p>
-                      "{request.message || "No message provided."}"
-                    </p>
+                    <p>"{request.message || "No message provided."}"</p>
 
-                    <small>
-                      Sent on {formatDate(request.createdAt)}
-                    </small>
+                    <small>Sent on {formatDate(request.createdAt)}</small>
 
                     {eventPassed && (
                       <p style={{ color: "#777", marginTop: "8px" }}>
@@ -182,8 +221,23 @@ function RequestsPage() {
                       {(request.status || "pending").toUpperCase()}
                     </span>
 
-                    {!eventPassed && request.status !== "rejected" && (
-                      <div style={{ marginTop: "8px" }}>
+                    <div
+                      style={{
+                        marginTop: "8px",
+                        display: "flex",
+                        gap: "8px",
+                        justifyContent: "flex-end"
+                      }}
+                    >
+                      <Button
+                        variant="outline-dark"
+                        size="sm"
+                        onClick={() => openDetailsModal(request)}
+                      >
+                        Details
+                      </Button>
+
+                      {!eventPassed && request.status !== "rejected" && (
                         <Button
                           variant="outline-danger"
                           size="sm"
@@ -191,8 +245,8 @@ function RequestsPage() {
                         >
                           Cancel Request
                         </Button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -200,6 +254,7 @@ function RequestsPage() {
           )}
         </div>
 
+        {/* Cancel Request Modal */}
         <Modal show={showCancelModal} onHide={closeCancelModal} centered>
           <Modal.Header closeButton>
             <Modal.Title>Cancel Request</Modal.Title>
@@ -227,6 +282,68 @@ function RequestsPage() {
             </Button>
           </Modal.Footer>
         </Modal>
+
+        {/* Event Details Modal */}
+        <Modal show={showDetailsModal} onHide={closeDetailsModal} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Event Details</Modal.Title>
+          </Modal.Header>
+
+          <Modal.Body>
+            {selectedDetailsRequest ? (
+              <>
+                <p>
+                  <strong>Event:</strong> {getEventTitle(selectedDetailsRequest)}
+                </p>
+
+                <p>
+                  <strong>Club:</strong> {getClubName(selectedDetailsRequest)}
+                </p>
+
+                <p>
+                  <strong>Category:</strong>{" "}
+                  {getEventCategory(selectedDetailsRequest)}
+                </p>
+
+                <p>
+                  <strong>Location:</strong>{" "}
+                  {getEventLocation(selectedDetailsRequest)}
+                </p>
+
+                <p>
+                  <strong>Date:</strong> {getEventDate(selectedDetailsRequest)}
+                </p>
+
+                <p>
+                  <strong>Time:</strong> {getEventTime(selectedDetailsRequest)}
+                </p>
+
+                <p>
+                  <strong>Points:</strong>{" "}
+                  {getEventPoints(selectedDetailsRequest)}
+                </p>
+
+                <p>
+                  <strong>Your Message:</strong>{" "}
+                  {selectedDetailsRequest.message || "No message provided."}
+                </p>
+
+                <p>
+                  <strong>Status:</strong>{" "}
+                  {(selectedDetailsRequest.status || "pending").toUpperCase()}
+                </p>
+              </>
+            ) : (
+              <p>No event selected.</p>
+            )}
+          </Modal.Body>
+
+          <Modal.Footer>
+            <Button variant="dark" onClick={closeDetailsModal}>
+              Close
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </div>
     </div>
   );
@@ -242,7 +359,7 @@ const pageStyle = {
 };
 
 const historyBox = {
-   border: "1.5px solid #1a22383b",
+  border: "1.5px solid #1a22383b",
   borderRadius: "16px",
   marginTop: "20px",
   backgroundColor: "#f9f9f9",

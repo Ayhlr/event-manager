@@ -50,7 +50,7 @@ const createOrganizerRequest = async (req, res) => {
 const getMyRequests = async (req, res) => {
   try {
     const requests = await Request.find({ user: req.user._id })
-      .populate("event", "title date time location status clubName")
+      .populate("event", "title date time location status clubName category points")
       .sort({ createdAt: -1 });
 
     res.status(200).json(requests);
@@ -65,7 +65,7 @@ const getManagerEventRequests = async (req, res) => {
 
     if (req.user.role === "admin") {
       requests = await Request.find()
-        .populate("event", "title clubName date location time user")
+       .populate("event", "title clubName date location time user category points")
         .populate("user", "firstName lastName email studentId")
         .sort({ createdAt: -1 });
     } else {
@@ -76,7 +76,7 @@ const getManagerEventRequests = async (req, res) => {
       const eventIds = managerEvents.map((event) => event._id);
 
       requests = await Request.find({ event: { $in: eventIds } })
-        .populate("event", "title clubName date location time user")
+       .populate("event", "title clubName date location time user category points")
         .populate("user", "firstName lastName email studentId")
         .sort({ createdAt: -1 });
     }

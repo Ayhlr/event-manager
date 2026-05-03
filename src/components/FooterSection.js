@@ -8,7 +8,7 @@ function FooterSection() {
         textAlign: "center",
         padding: "60px",
         background:
-          "linear-gradient(135deg, #030817 0%, #1a2238 45%, #d9d9d9 100%)",
+  "linear-gradient(to bottom, #030817 0%, #1a2238 45%, #d9d9d9 100%)",
         color: "#d9d9d9"
       }}
     >

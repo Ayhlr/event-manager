@@ -8,7 +8,8 @@ body {
   margin: 0;
   background-color: var(--light-gray) !important;
   color: var(--dark-blue) !important;
-font-family: "Josefin Sans", Arial, sans-serif;}
+  font-family: "Josefin Sans", Arial, sans-serif;
+}
 
 a {
   color: var(--light-gray) !important;
@@ -43,4 +44,50 @@ button:hover,
 .card p,
 .card span {
   color: var(--light-gray) !important;
+}
+
+/* Close button box = light gray */
+button[aria-label="Close"],
+button[aria-label="close"],
+.close,
+.close-btn,
+.btn-close {
+  background-color: var(--light-gray) !important;
+  color: var(--dark-blue) !important;
+  border: none !important;
+  opacity: 1 !important;
+  border-radius: 8px !important;
+}
+
+/* Remove Bootstrap default X image */
+.btn-close {
+  background-image: none !important;
+  position: relative !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  filter: none !important;
+}
+
+/* New navy X */
+.btn-close::before {
+  content: "×";
+  color: var(--dark-blue) !important;
+  font-size: 26px;
+  font-weight: bold;
+  line-height: 1;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -55%);
+}
+
+/* Keep hover light gray, not black */
+button[aria-label="Close"]:hover,
+button[aria-label="close"]:hover,
+.close:hover,
+.close-btn:hover,
+.btn-close:hover {
+  background-color: var(--light-gray) !important;
+  color: var(--dark-blue) !important;
 }

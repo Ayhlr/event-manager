@@ -2,11 +2,14 @@ function HeroSection() {
   return (
     <div
       style={{
-  textAlign: "center",
-  padding: "60px",
-  background:  "linear-gradient(135deg, #030817 0%, #1a2238 15%, #d9d9d9 70%)",
-  color: "#030817"
-}}
+        textAlign: "center",
+        padding: "60px",
+        margin: 0,
+        width: "100%",
+        background:
+          "linear-gradient(135deg, #030817 0%, #1a2238 15%, #d9d9d9 70%)",
+        color: "#030817"
+      }}
     >
       <h1 style={{ fontWeight: "bold", fontStyle: "italic" }}>
         Discover Events at KU

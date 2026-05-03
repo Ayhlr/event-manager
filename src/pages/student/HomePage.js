@@ -327,13 +327,13 @@ function HomePage() {
       {showSidebar && <Sidebar />}
 
       <div
-        style={{
-          marginLeft: showSidebar ? "250px" : "0",
-          padding: "20px",
-          width: showSidebar ? "calc(100% - 250px)" : "100%",
-          boxSizing: "border-box"
-        }}
-      >
+  style={{
+    marginLeft: showSidebar ? "250px" : "0",
+    padding: "0",
+    width: showSidebar ? "calc(100% - 250px)" : "100%",
+    boxSizing: "border-box"
+  }}
+>
         <HeroSection />
 
         <CategorySection
