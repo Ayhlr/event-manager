@@ -65,8 +65,8 @@ MONGO_URI=your_mongodb_atlas_connection_string
 PORT=5001
 JWT_SECRET=your_secret_key
 
-Note:
-The .env file is not uploaded to GitHub for security reasons. The actual MONGO_URI is provided privately for grading/testing purposes.
+## Note:
+## The .env file is not uploaded to GitHub for security reasons. The actual MONGO_URI is provided privately for grading/testing purposes.
 
 
 Database
