@@ -2,6 +2,7 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const Registration = require("../models/Registration");
 const PointsHistory = require("../models/PointsHistory");
+
 const getMyProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("-password");
@@ -10,7 +11,13 @@ const getMyProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json(user);
+    const userObject = user.toObject();
+
+    if (!userObject.roles || userObject.roles.length === 0) {
+      userObject.roles = [userObject.role || "student"];
+    }
+
+    res.status(200).json(userObject);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -29,14 +36,10 @@ const updateMyProfile = async (req, res) => {
     if (notifPref !== undefined) updateData.notifPref = notifPref;
     if (profVis !== undefined) updateData.profVis = profVis;
 
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
-      updateData,
-      {
-        new: true,
-        runValidators: true
-      }
-    ).select("-password");
+    const updatedUser = await User.findByIdAndUpdate(req.user._id, updateData, {
+      new: true,
+      runValidators: true
+    }).select("-password");
 
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
@@ -102,6 +105,7 @@ const deleteMyAccount = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 const getStudentProfileSummary = async (req, res) => {
   try {
     const student = await User.findById(req.params.id).select(
@@ -139,9 +143,12 @@ const getStudentProfileSummary = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 const getAllManagers = async (req, res) => {
   try {
-    const managers = await User.find({ role: "manager" })
+    const managers = await User.find({
+      $or: [{ role: "manager" }, { roles: "manager" }]
+    })
       .select("-password")
       .sort({ createdAt: -1 });
 
@@ -150,11 +157,107 @@ const getAllManagers = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+const searchStudents = async (req, res) => {
+  try {
+    const searchValue = req.query.search || "";
+
+    if (!searchValue.trim()) {
+      return res.status(400).json({ message: "Please enter an email or name to search" });
+    }
+
+    const students = await User.find({
+      role: { $ne: "admin" },
+      $or: [
+        { email: { $regex: searchValue, $options: "i" } },
+        { firstName: { $regex: searchValue, $options: "i" } },
+        { lastName: { $regex: searchValue, $options: "i" } },
+        { studentId: { $regex: searchValue, $options: "i" } }
+      ]
+    })
+      .select("-password")
+      .limit(10);
+
+    res.status(200).json(students);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const grantManagerAccess = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.role === "admin") {
+      return res.status(400).json({ message: "Admin users cannot be changed to managers" });
+    }
+
+    if (!user.roles || user.roles.length === 0) {
+      user.roles = [user.role || "student"];
+    }
+
+    if (!user.roles.includes("student")) {
+      user.roles.push("student");
+    }
+
+    if (!user.roles.includes("manager")) {
+      user.roles.push("manager");
+    }
+
+    user.role = "student";
+
+    await user.save();
+
+    const updatedUser = await User.findById(user._id).select("-password");
+
+    res.status(200).json({
+      message: "Manager access granted successfully",
+      user: updatedUser
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const removeManagerAccess = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.roles = (user.roles || []).filter((role) => role !== "manager");
+
+    if (!user.roles.includes("student")) {
+      user.roles.push("student");
+    }
+
+    user.role = "student";
+
+    await user.save();
+
+    res.status(200).json({
+      message: "Manager access removed successfully",
+      user: await User.findById(user._id).select("-password")
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getMyProfile,
   updateMyProfile,
   changePassword,
   deleteMyAccount,
   getStudentProfileSummary,
-  getAllManagers
+  getAllManagers,
+  searchStudents,
+  grantManagerAccess,
+  removeManagerAccess
 };

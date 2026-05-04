@@ -10,9 +10,7 @@ function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [viewMode, setViewMode] = useState("student");
-
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -28,21 +26,9 @@ function LoginPage() {
         password
       });
 
-      const realRole = data.user.role;
-
-      if (viewMode === "manager" && realRole !== "manager") {
-        setError("You are not approved as a manager.");
-        return;
-      }
-
-      if (viewMode === "admin" && realRole !== "admin") {
-        setError("You are not an admin.");
-        return;
-      }
-
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("role", realRole);
+      localStorage.setItem("role", viewMode);
       localStorage.setItem("viewMode", viewMode);
       localStorage.setItem("isLoggedIn", "true");
 
@@ -54,7 +40,7 @@ function LoginPage() {
         navigate("/home");
       }
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -115,9 +101,9 @@ function LoginPage() {
               value={viewMode}
               onChange={(e) => setViewMode(e.target.value)}
             >
-              <option value="student">Student </option>
-              <option value="manager">Manager </option>
-              <option value="admin">Admin </option>
+              <option value="student">Student</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Admin</option>
             </Form.Select>
           </Form.Group>
 

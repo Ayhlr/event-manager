@@ -42,6 +42,12 @@ const userSchema = new mongoose.Schema(
       default: "student"
     },
 
+    roles: {
+      type: [String],
+      enum: ["student", "manager", "admin"],
+      default: ["student"]
+    },
+
     bio: {
       type: String,
       default: ""
@@ -74,5 +80,17 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+userSchema.pre("save", function (next) {
+  if (!this.roles || this.roles.length === 0) {
+    this.roles = [this.role || "student"];
+  }
+
+  if (!this.roles.includes(this.role)) {
+    this.roles.push(this.role);
+  }
+
+  next();
+});
 
 module.exports = mongoose.model("User", userSchema);

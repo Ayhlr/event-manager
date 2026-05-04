@@ -31,18 +31,21 @@ const registerUser = async (req, res) => {
       phoneNumber,
       password: hashedPassword,
       studentId,
-      role: "student"
+      role: "student",
+      roles: ["student"]
     });
 
     res.status(201).json({
       message: "User registered successfully",
       token: generateToken(user._id, user.role),
       user: {
+        _id: user._id,
         id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        role: user.role
+        role: user.role,
+        roles: user.roles
       }
     });
   } catch (error) {
@@ -70,15 +73,20 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    const roles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+    const token = generateToken(user._id, user.role);
+
     res.status(200).json({
       message: "Login successful",
-      token: generateToken(user._id, user.role),
+      token,
       user: {
+        _id: user._id,
         id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        role: user.role
+        role: user.role,
+        roles
       }
     });
   } catch (error) {
