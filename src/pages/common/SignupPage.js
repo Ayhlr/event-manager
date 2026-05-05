@@ -20,11 +20,32 @@ function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/;
+
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
+  };
+
+  const validateForm = () => {
+    if (
+      !formData.firstName.trim() ||
+      !formData.lastName.trim() ||
+      !formData.email.trim() ||
+      !formData.phoneNumber.trim() ||
+      !formData.studentId.trim() ||
+      !formData.password
+    ) {
+      return "Please fill all required fields.";
+    }
+
+    if (!passwordRegex.test(formData.password)) {
+      return "Password must be at least 6 characters and include one letter, one number, and one special character.";
+    }
+
+    return "";
   };
 
   const handleSubmit = async (e) => {
@@ -34,7 +55,24 @@ function SignupPage() {
       setLoading(true);
       setError("");
 
-      const data = await apiRequest("/auth/register", "POST", formData);
+      const validationError = validateForm();
+
+      if (validationError) {
+        setError(validationError);
+        setLoading(false);
+        return;
+      }
+
+      const cleanedFormData = {
+        ...formData,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim().toLowerCase(),
+        phoneNumber: formData.phoneNumber.trim(),
+        studentId: formData.studentId.trim()
+      };
+
+      const data = await apiRequest("/auth/register", "POST", cleanedFormData);
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
@@ -145,10 +183,11 @@ function SignupPage() {
               placeholder="Enter student ID"
               value={formData.studentId}
               onChange={handleChange}
+              required
             />
           </Form.Group>
 
-          <Form.Group style={{ marginBottom: "20px" }}>
+          <Form.Group style={{ marginBottom: "8px" }}>
             <Form.Label>Password</Form.Label>
             <Form.Control
               type="password"
@@ -159,6 +198,17 @@ function SignupPage() {
               required
             />
           </Form.Group>
+
+          <p
+            style={{
+              fontSize: "13px",
+              color: "#666",
+              marginBottom: "20px"
+            }}
+          >
+            Password must be at least 6 characters and include one letter, one
+            number, and one special character.
+          </p>
 
           <Button
             variant="dark"

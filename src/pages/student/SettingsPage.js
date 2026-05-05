@@ -10,18 +10,6 @@ import { apiRequest } from "../../api";
 function SettingsPage() {
   const navigate = useNavigate();
 
-  const role = localStorage.getItem("role");
-  const isManager = role === "manager";
-
-  const pageStyle = {
-    marginLeft: isManager ? "0" : "250px",
-    padding: "30px",
-    width: "100%",
-    minHeight: "100vh",
-    backgroundColor: "#d9d9d9",
-    color: "#030817"
-  };
-
   const [user, setUser] = useState(null);
 
   const [notifPref, setNotifPref] = useState({
@@ -50,26 +38,25 @@ function SettingsPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/;
+
   const fetchSettings = async () => {
     try {
       setError("");
+      setSuccess("");
 
       const data = await apiRequest("/users/me");
 
       setUser(data);
 
-      if (data.notifPref) {
-        setNotifPref({
-          eventReminders: data.notifPref.eventReminders ?? true,
-          newEvents: data.notifPref.newEvents ?? true,
-          requestUpdates: data.notifPref.requestUpdates ?? true,
-          emailDigest: data.notifPref.emailDigest ?? false
-        });
-      }
+      setNotifPref({
+        eventReminders: data.notifPref?.eventReminders ?? true,
+        newEvents: data.notifPref?.newEvents ?? true,
+        requestUpdates: data.notifPref?.requestUpdates ?? true,
+        emailDigest: data.notifPref?.emailDigest ?? false
+      });
 
-      if (data.profVis) {
-        setProfVis(data.profVis);
-      }
+      setProfVis(data.profVis || "public");
     } catch (err) {
       setError(err.message);
     }
@@ -116,6 +103,64 @@ function SettingsPage() {
     }));
   };
 
+  const validatePasswordForm = () => {
+    if (
+      !passwordData.currentPassword ||
+      !passwordData.newPassword ||
+      !passwordData.confirmPassword
+    ) {
+      return "Please fill all password fields.";
+    }
+
+    if (!passwordRegex.test(passwordData.newPassword)) {
+      return "New password must be at least 6 characters and include one letter, one number, and one special character.";
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      return "New password and confirm password do not match.";
+    }
+
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      return "New password cannot be the same as the current password.";
+    }
+
+    return "";
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+
+    try {
+      setChangingPassword(true);
+      setError("");
+      setSuccess("");
+
+      const validationError = validatePasswordForm();
+
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+
+      await apiRequest("/users/change-password", "PUT", {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+
+      setSuccess("Password changed successfully.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   const handleSavePreferences = async () => {
     try {
       setSavingPrefs(true);
@@ -151,48 +196,6 @@ function SettingsPage() {
       setError(err.message);
     } finally {
       setSavingPrivacy(false);
-    }
-  };
-
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      setChangingPassword(true);
-      setError("");
-      setSuccess("");
-
-      if (
-        !passwordData.currentPassword ||
-        !passwordData.newPassword ||
-        !passwordData.confirmPassword
-      ) {
-        setError("Please fill all password fields.");
-        return;
-      }
-
-      if (passwordData.newPassword !== passwordData.confirmPassword) {
-        setError("New password and confirm password do not match.");
-        return;
-      }
-
-      await apiRequest("/users/change-password", "PUT", {
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword,
-        confirmPassword: passwordData.confirmPassword
-      });
-
-      setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: ""
-      });
-
-      setSuccess("Password changed successfully.");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setChangingPassword(false);
     }
   };
 
@@ -251,7 +254,7 @@ function SettingsPage() {
   if (loading) {
     return (
       <div style={{ display: "flex" }}>
-        {!isManager && <Sidebar />}
+        <Sidebar />
 
         <div style={pageStyle}>
           <p>Loading settings...</p>
@@ -262,7 +265,7 @@ function SettingsPage() {
 
   return (
     <div style={{ display: "flex" }}>
-      {!isManager && <Sidebar />}
+      <Sidebar />
 
       <div style={pageStyle}>
         <h2>Settings</h2>
@@ -312,7 +315,7 @@ function SettingsPage() {
         <div style={boxStyle}>
           <h4>Change Password</h4>
 
-          <Form onSubmit={handlePasswordSubmit}>
+          <Form onSubmit={handleChangePassword}>
             <Form.Group style={{ marginTop: "10px" }}>
               <Form.Label>Current Password</Form.Label>
               <Form.Control
@@ -321,6 +324,7 @@ function SettingsPage() {
                 placeholder="Enter current password"
                 value={passwordData.currentPassword}
                 onChange={handlePasswordChange}
+                required
               />
             </Form.Group>
 
@@ -332,7 +336,13 @@ function SettingsPage() {
                 placeholder="Enter new password"
                 value={passwordData.newPassword}
                 onChange={handlePasswordChange}
+                required
               />
+
+              <p style={passwordHintStyle}>
+                Password must be at least 6 characters and include one letter,
+                one number, and one special character.
+              </p>
             </Form.Group>
 
             <Form.Group style={{ marginTop: "10px" }}>
@@ -343,6 +353,7 @@ function SettingsPage() {
                 placeholder="Confirm new password"
                 value={passwordData.confirmPassword}
                 onChange={handlePasswordChange}
+                required
               />
             </Form.Group>
 
@@ -464,6 +475,15 @@ function SettingsPage() {
   );
 }
 
+const pageStyle = {
+  marginLeft: "250px",
+  padding: "30px",
+  width: "100%",
+  minHeight: "100vh",
+  backgroundColor: "#d9d9d9",
+  color: "#030817"
+};
+
 const boxStyle = {
   border: "1.5px solid #1a22383b",
   padding: "20px",
@@ -479,6 +499,13 @@ const activeStyle = {
   padding: "5px 10px",
   borderRadius: "20px",
   fontWeight: "bold"
+};
+
+const passwordHintStyle = {
+  fontSize: "13px",
+  color: "#666",
+  marginTop: "6px",
+  marginBottom: 0
 };
 
 export default SettingsPage;

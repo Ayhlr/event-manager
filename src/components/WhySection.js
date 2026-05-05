@@ -4,18 +4,19 @@ function WhySection() {
       style={{
         textAlign: "center",
         padding: "60px",
-        backgroundColor: "#030817",
-        color: "#f9f9f9"
+        backgroundColor: "#d9d9d9",
+        color: "#030817"
       }}
     >
-      <h4>Why Use Event-it?</h4>
+      <h4 style={{ color: "#030817" }}>Why Use Event-it?</h4>
 
       <div
         style={{
           display: "flex",
           justifyContent: "center",
           gap: "30px",
-          marginTop: "40px"
+          marginTop: "40px",
+          flexWrap: "wrap"
         }}
       >
         <div style={boxStyle}>
@@ -38,11 +39,11 @@ function WhySection() {
 }
 
 const boxStyle = {
-  border: "1px solid #f9f9f9",
+  border: "1px solid #030817",
   padding: "30px",
   width: "260px",
   borderRadius: "10px",
-  boxShadow: "0 2px 8px rgba(144, 148, 150, 0.57)",
+  boxShadow: "0 4px 12px rgba(3, 8, 23, 0.25)",
   textAlign: "center",
   backgroundColor: "#030817",
   color: "#f9f9f9"

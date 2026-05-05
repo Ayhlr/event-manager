@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Table, Card, Form, Button } from "react-bootstrap";
+import { Table, Card, Form, Button, Modal } from "react-bootstrap";
 import { apiRequest } from "../../api";
 
 function ParticipantsPage() {
@@ -8,6 +8,11 @@ function ParticipantsPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [showRevokeModal, setShowRevokeModal] = useState(false);
+  const [selectedParticipant, setSelectedParticipant] = useState(null);
+  const [isRevoking, setIsRevoking] = useState(false);
+  const [modalError, setModalError] = useState("");
 
   const fetchParticipants = async () => {
     try {
@@ -32,27 +37,51 @@ function ParticipantsPage() {
     fetchParticipants();
   }, []);
 
-  const handleRevokePoints = async (participant) => {
+  const openRevokeModal = (participant) => {
+    if (!participant.pointsHistoryId) {
+      setModalError("No points record found for this organizer.");
+      setSelectedParticipant(participant);
+      setShowRevokeModal(true);
+      return;
+    }
+
+    setModalError("");
+    setSelectedParticipant(participant);
+    setShowRevokeModal(true);
+  };
+
+  const closeRevokeModal = () => {
+    if (isRevoking) return;
+
+    setShowRevokeModal(false);
+    setSelectedParticipant(null);
+    setModalError("");
+  };
+
+  const confirmRevokePoints = async () => {
     try {
-      if (!participant.pointsHistoryId) {
-        alert("No points record found for this participant.");
+      if (!selectedParticipant?.pointsHistoryId) {
+        setModalError("No points record found for this organizer.");
         return;
       }
 
-      const confirmAction = window.confirm(
-        "Are you sure you want to revoke this student's points?"
+      setIsRevoking(true);
+      setModalError("");
+
+      await apiRequest(
+        `/points-history/${selectedParticipant.pointsHistoryId}/status`,
+        "PUT",
+        {
+          status: "revoked"
+        }
       );
 
-      if (!confirmAction) return;
-
-      await apiRequest(`/points-history/${participant.pointsHistoryId}/status`, "PUT", {
-        status: "revoked"
-      });
-
-      alert("Points revoked successfully.");
-      fetchParticipants();
+      await fetchParticipants();
+      closeRevokeModal();
     } catch (err) {
-      alert(err.message);
+      setModalError(err.message);
+    } finally {
+      setIsRevoking(false);
     }
   };
 
@@ -86,9 +115,108 @@ function ParticipantsPage() {
   };
 
   const getEventName = (participant) => {
+    const getEventDateTime = (participant) => {
+  if (!participant.event?.date) return null;
+
+  const eventDate = new Date(participant.event.date);
+
+  if (Number.isNaN(eventDate.getTime())) return null;
+
+  let hours = 23;
+  let minutes = 59;
+
+  if (participant.event.time) {
+    const timeString = String(participant.event.time).trim();
+
+    const match = timeString.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+
+    if (match) {
+      hours = Number(match[1]);
+      minutes = Number(match[2]);
+
+      const period = match[3]?.toUpperCase();
+
+      if (period === "PM" && hours !== 12) {
+        hours += 12;
+      }
+
+      if (period === "AM" && hours === 12) {
+        hours = 0;
+      }
+    }
+  }
+
+  eventDate.setHours(hours, minutes, 0, 0);
+  return eventDate;
+};
+
+const hasEventFinished = (participant) => {
+  const eventDateTime = getEventDateTime(participant);
+
+  if (!eventDateTime) return false;
+
+  return new Date() >= eventDateTime;
+};
+
+const canShowRevokeButton = (participant, pointsStatus) => {
+  return (
+    pointsStatus === "pending" &&
+    participant.canRevokePoints === true &&
+    hasEventFinished(participant)
+  );
+};
     return participant.event?.title || "Untitled Event";
   };
+const getEventDateTime = (participant) => {
+  if (!participant.event?.date) return null;
 
+  const eventDate = new Date(participant.event.date);
+
+  if (Number.isNaN(eventDate.getTime())) return null;
+
+  let hours = 23;
+  let minutes = 59;
+
+  if (participant.event.time) {
+    const timeString = String(participant.event.time).trim();
+
+    const match = timeString.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+
+    if (match) {
+      hours = Number(match[1]);
+      minutes = Number(match[2]);
+
+      const period = match[3]?.toUpperCase();
+
+      if (period === "PM" && hours !== 12) {
+        hours += 12;
+      }
+
+      if (period === "AM" && hours === 12) {
+        hours = 0;
+      }
+    }
+  }
+
+  eventDate.setHours(hours, minutes, 0, 0);
+  return eventDate;
+};
+
+const hasEventFinished = (participant) => {
+  const eventDateTime = getEventDateTime(participant);
+
+  if (!eventDateTime) return false;
+
+  return new Date() >= eventDateTime;
+};
+
+const canShowRevokeButton = (participant, pointsStatus) => {
+  return (
+    pointsStatus === "pending" &&
+    participant.canRevokePoints === true &&
+    hasEventFinished(participant)
+  );
+};
   const filtered = participants.filter((participant) => {
     const searchValue = search.toLowerCase();
 
@@ -110,7 +238,7 @@ function ParticipantsPage() {
   ).length;
 
   const pendingPointsCount = participants.filter(
-    (p) => p.pointsStatus === "pending"
+    (p) => (p.pointsStatus || "").toLowerCase() === "pending"
   ).length;
 
   const totalCapacity = participants.reduce((total, participant) => {
@@ -119,7 +247,8 @@ function ParticipantsPage() {
 
   const handleExport = () => {
     if (participants.length === 0) {
-      alert("No participants to export.");
+      setModalError("No organizers to export.");
+      setShowRevokeModal(true);
       return;
     }
 
@@ -148,7 +277,7 @@ function ParticipantsPage() {
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = "participants.csv";
+    link.download = "accepted-organizers.csv";
     link.click();
 
     URL.revokeObjectURL(url);
@@ -158,7 +287,7 @@ function ParticipantsPage() {
     return (
       <div style={pageStyle}>
         <h2>Participants</h2>
-        <p>Loading participants...</p>
+        <p>Loading accepted organizers...</p>
       </div>
     );
   }
@@ -175,11 +304,13 @@ function ParticipantsPage() {
   return (
     <div style={pageStyle}>
       <h2>Participants</h2>
-      <p style={{ color: "#666" }}>View and manage event participants</p>
+      <p style={{ color: "#666" }}>
+        View accepted organizers and manage their points
+      </p>
 
       <div style={summaryContainer}>
         <Card style={summaryCard}>
-          <small>Total Participants</small>
+          <small>Total Accepted Organizers</small>
           <h3>{participants.length}</h3>
           <small>of {totalCapacity} total capacity</small>
         </Card>
@@ -208,7 +339,7 @@ function ParticipantsPage() {
       </div>
 
       {filtered.length === 0 ? (
-        <p style={{ color: "#666" }}>No participants found.</p>
+        <p style={{ color: "#666" }}>No accepted organizers found.</p>
       ) : (
         <div style={tableWrapper}>
           <Table bordered responsive style={tableStyle}>
@@ -229,7 +360,9 @@ function ParticipantsPage() {
             <tbody>
               {filtered.map((participant) => {
                 const status = getStatus(participant);
-                const pointsStatus = participant.pointsStatus || "none";
+                const pointsStatus = (
+                  participant.pointsStatus || "none"
+                ).toLowerCase();
 
                 return (
                   <tr key={participant._id}>
@@ -251,7 +384,11 @@ function ParticipantsPage() {
                       </span>
                     </td>
 
-                    <td>{participant.points || 0}</td>
+                    <td>
+                      {pointsStatus === "none"
+                        ? 0
+                        : participant.points || 50}
+                    </td>
 
                     <td>
                       <span
@@ -269,19 +406,23 @@ function ParticipantsPage() {
                       </span>
                     </td>
 
-                    <td>
-                      {pointsStatus === "pending" ? (
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleRevokePoints(participant)}
-                        >
-                          Revoke Points
-                        </Button>
-                      ) : (
-                        <span style={{ color: "#777" }}>No action</span>
-                      )}
-                    </td>
+                   <td>
+  {canShowRevokeButton(participant, pointsStatus) ? (
+    <Button
+      size="sm"
+      onClick={() => openRevokeModal(participant)}
+      style={revokeButton}
+    >
+      Revoke Points
+    </Button>
+  ) : pointsStatus === "pending" && !hasEventFinished(participant) ? (
+    <span style={{ color: "#777" }}>Available after event</span>
+  ) : pointsStatus === "pending" && hasEventFinished(participant) ? (
+    <span style={{ color: "#777" }}>Pending review</span>
+  ) : (
+    <span style={{ color: "#777" }}>No action</span>
+  )}
+</td>
                   </tr>
                 );
               })}
@@ -289,6 +430,68 @@ function ParticipantsPage() {
           </Table>
         </div>
       )}
+
+      <Modal show={showRevokeModal} onHide={closeRevokeModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {selectedParticipant ? "Revoke Points" : "Notice"}
+          </Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          {modalError && (
+            <p style={{ color: "#842029", marginBottom: "12px" }}>
+              {modalError}
+            </p>
+          )}
+
+          {selectedParticipant && selectedParticipant.pointsHistoryId && (
+            <>
+              <p>
+                Are you sure you want to revoke points for{" "}
+                <strong>{getName(selectedParticipant)}</strong>?
+              </p>
+
+              <div style={modalInfoBox}>
+                <p style={modalInfoText}>
+                  <strong>Event:</strong> {getEventName(selectedParticipant)}
+                </p>
+                <p style={modalInfoText}>
+                  <strong>Points:</strong> {selectedParticipant.points || 50}
+                </p>
+                <p style={modalInfoText}>
+                  <strong>Current Status:</strong>{" "}
+                  {(selectedParticipant.pointsStatus || "pending").toUpperCase()}
+                </p>
+              </div>
+
+              <p style={{ color: "#666", marginBottom: 0 }}>
+                This action is only allowed while the points are still pending.
+              </p>
+            </>
+          )}
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={closeRevokeModal}
+            disabled={isRevoking}
+          >
+            Cancel
+          </Button>
+
+          {selectedParticipant?.pointsHistoryId && (
+            <Button
+              onClick={confirmRevokePoints}
+              disabled={isRevoking}
+              style={confirmButton}
+            >
+              {isRevoking ? "Revoking..." : "Yes, Revoke"}
+            </Button>
+          )}
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
@@ -334,7 +537,7 @@ const tableWrapper = {
   border: "1.5px solid #1a22383b",
   borderRadius: "16px",
   padding: "15px",
-  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.46)",
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.46)"
 };
 
 const tableStyle = {
@@ -376,6 +579,30 @@ const normalBadge = {
   color: "#030817",
   backgroundColor: "#f9f9f9",
   border: "1px solid #1a2238"
+};
+
+const revokeButton = {
+  backgroundColor: "#842029",
+  color: "#ffffff",
+  border: "1px solid #842029"
+};
+
+const confirmButton = {
+  backgroundColor: "#030817",
+  color: "#ffffff",
+  border: "1px solid #030817"
+};
+
+const modalInfoBox = {
+  backgroundColor: "#f8f9fa",
+  border: "1px solid #dee2e6",
+  borderRadius: "10px",
+  padding: "12px",
+  marginBottom: "12px"
+};
+
+const modalInfoText = {
+  marginBottom: "6px"
 };
 
 export default ParticipantsPage;

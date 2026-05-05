@@ -4,14 +4,13 @@ import { Link } from "react-router-dom";
 function FooterSection() {
   return (
     <div
-      style={{
-        textAlign: "center",
-        padding: "60px",
-        background:
-  "linear-gradient(to bottom, #030817 0%, #1a2238 45%, #d9d9d9 100%)",
-        color: "#d9d9d9"
-      }}
-    >
+  style={{
+    textAlign: "center",
+    padding: "60px",
+    background: "linear-gradient(to bottom, #d9d9d9 0%, #030817 100%)",
+    color: "#030817"
+  }}
+>
       <h4 style={{ color: "#d9d9d9" }}>Ready to Get Started?</h4>
 
       <p style={{ color: "#d9d9d9" }}>

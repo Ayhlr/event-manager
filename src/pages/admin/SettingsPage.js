@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Sidebar from "../../components/Sidebar";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import Alert from "react-bootstrap/Alert";
@@ -36,6 +37,8 @@ function SettingsPage() {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/;
 
   const fetchSettings = async () => {
     try {
@@ -100,6 +103,30 @@ function SettingsPage() {
     }));
   };
 
+  const validatePasswordForm = () => {
+    if (
+      !passwordData.currentPassword ||
+      !passwordData.newPassword ||
+      !passwordData.confirmPassword
+    ) {
+      return "Please fill all password fields.";
+    }
+
+    if (!passwordRegex.test(passwordData.newPassword)) {
+      return "New password must be at least 6 characters and include one letter, one number, and one special character.";
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      return "New password and confirm password do not match.";
+    }
+
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      return "New password cannot be the same as the current password.";
+    }
+
+    return "";
+  };
+
   const handleChangePassword = async (e) => {
     e.preventDefault();
 
@@ -108,24 +135,16 @@ function SettingsPage() {
       setError("");
       setSuccess("");
 
-      if (
-        !passwordData.currentPassword ||
-        !passwordData.newPassword ||
-        !passwordData.confirmPassword
-      ) {
-        setError("Please fill all password fields.");
-        return;
-      }
+      const validationError = validatePasswordForm();
 
-      if (passwordData.newPassword !== passwordData.confirmPassword) {
-        setError("New password and confirm password do not match.");
+      if (validationError) {
+        setError(validationError);
         return;
       }
 
       await apiRequest("/users/change-password", "PUT", {
         currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword,
-        confirmPassword: passwordData.confirmPassword
+        newPassword: passwordData.newPassword
       });
 
       setPasswordData({
@@ -234,49 +253,60 @@ function SettingsPage() {
 
   if (loading) {
     return (
-      <div style={pageStyle}>
-        <p>Loading settings...</p>
+      <div style={{ display: "flex" }}>
+        <Sidebar />
+
+        <div style={pageStyle}>
+          <p>Loading settings...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={pageStyle}>
-      <div style={headerStyle}>
-        <h1 style={{ margin: 0, fontSize: "34px", fontWeight: "700" }}>
-          Settings
-        </h1>
+    <div style={{ display: "flex" }}>
+      <Sidebar />
 
-        <p style={{ margin: "8px 0 0 0", color: "#6b7280", fontSize: "18px" }}>
+      <div style={pageStyle}>
+        <h2>Settings</h2>
+
+        <p style={{ color: "#666" }}>
           Manage your account settings and preferences
         </p>
-      </div>
 
-      <div style={{ maxWidth: "850px", margin: "0 auto" }}>
-        {error && <Alert variant="danger">{error}</Alert>}
-        {success && <Alert variant="success">{success}</Alert>}
+        {error && (
+          <Alert variant="danger" style={{ maxWidth: "760px" }}>
+            {error}
+          </Alert>
+        )}
+
+        {success && (
+          <Alert variant="success" style={{ maxWidth: "760px" }}>
+            {success}
+          </Alert>
+        )}
 
         <div style={boxStyle}>
           <h4>Account Information</h4>
 
-          <div style={{ display: "flex", gap: "50px", marginTop: "15px" }}>
+          <div style={{ display: "flex", gap: "40px", marginTop: "10px" }}>
             <div>
-              <p style={labelText}>Email</p>
+              <p>Email</p>
               <strong>{user?.email || "No email"}</strong>
             </div>
 
             <div>
-              <p style={labelText}>Account Type</p>
+              <p>Account Type</p>
               <strong>{formatRole(user?.role)}</strong>
             </div>
 
             <div>
-              <p style={labelText}>Status</p>
+              <p>Status</p>
               <span style={activeStyle}>ACTIVE</span>
             </div>
           </div>
 
-          <p style={{ marginTop: "15px" }}>
+          <p style={{ marginTop: "10px" }}>
             Member Since:{" "}
             <strong>{formatMemberSince(user?.createdAt)}</strong>
           </p>
@@ -286,7 +316,7 @@ function SettingsPage() {
           <h4>Change Password</h4>
 
           <Form onSubmit={handleChangePassword}>
-            <Form.Group style={{ marginTop: "12px" }}>
+            <Form.Group style={{ marginTop: "10px" }}>
               <Form.Label>Current Password</Form.Label>
               <Form.Control
                 type="password"
@@ -294,10 +324,11 @@ function SettingsPage() {
                 placeholder="Enter current password"
                 value={passwordData.currentPassword}
                 onChange={handlePasswordChange}
+                required
               />
             </Form.Group>
 
-            <Form.Group style={{ marginTop: "12px" }}>
+            <Form.Group style={{ marginTop: "10px" }}>
               <Form.Label>New Password</Form.Label>
               <Form.Control
                 type="password"
@@ -305,10 +336,16 @@ function SettingsPage() {
                 placeholder="Enter new password"
                 value={passwordData.newPassword}
                 onChange={handlePasswordChange}
+                required
               />
+
+              <p style={passwordHintStyle}>
+                Password must be at least 6 characters and include one letter,
+                one number, and one special character.
+              </p>
             </Form.Group>
 
-            <Form.Group style={{ marginTop: "12px" }}>
+            <Form.Group style={{ marginTop: "10px" }}>
               <Form.Label>Confirm New Password</Form.Label>
               <Form.Control
                 type="password"
@@ -316,11 +353,12 @@ function SettingsPage() {
                 placeholder="Confirm new password"
                 value={passwordData.confirmPassword}
                 onChange={handlePasswordChange}
+                required
               />
             </Form.Group>
 
             <Button
-              style={{ marginTop: "16px" }}
+              style={{ marginTop: "15px" }}
               variant="dark"
               type="submit"
               disabled={changingPassword}
@@ -358,7 +396,7 @@ function SettingsPage() {
           />
 
           <Button
-            style={{ marginTop: "16px" }}
+            style={{ marginTop: "15px" }}
             variant="dark"
             onClick={handleSavePreferences}
             disabled={savingPrefs}
@@ -381,7 +419,7 @@ function SettingsPage() {
             </Form.Select>
           </Form.Group>
 
-          <div style={{ marginTop: "16px" }}>
+          <div style={{ marginTop: "15px" }}>
             <Button
               variant="dark"
               onClick={handleSavePrivacy}
@@ -399,80 +437,75 @@ function SettingsPage() {
             </Button>
           </div>
         </div>
+
+        <Modal
+          show={showDeleteModal}
+          onHide={() => setShowDeleteModal(false)}
+          centered
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Delete Account</Modal.Title>
+          </Modal.Header>
+
+          <Modal.Body>
+            Are you sure you want to delete your account? This action cannot be
+            undone.
+          </Modal.Body>
+
+          <Modal.Footer>
+            <Button
+              variant="secondary"
+              onClick={() => setShowDeleteModal(false)}
+              disabled={deletingAccount}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="danger"
+              onClick={handleDeleteAccount}
+              disabled={deletingAccount}
+            >
+              {deletingAccount ? "Deleting..." : "Delete Account"}
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </div>
-
-      <Modal
-        show={showDeleteModal}
-        onHide={() => setShowDeleteModal(false)}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Delete Account</Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body>
-          Are you sure you want to delete your account? This action cannot be
-          undone.
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setShowDeleteModal(false)}
-            disabled={deletingAccount}
-          >
-            Cancel
-          </Button>
-
-          <Button
-            variant="danger"
-            onClick={handleDeleteAccount}
-            disabled={deletingAccount}
-          >
-            {deletingAccount ? "Deleting..." : "Delete Account"}
-          </Button>
-        </Modal.Footer>
-      </Modal>
     </div>
   );
 }
 
 const pageStyle = {
+  marginLeft: "250px",
   padding: "30px",
+  width: "100%",
+  minHeight: "100vh",
   backgroundColor: "#d9d9d9",
-  color: "#030817",
-  minHeight: "100vh"
-};
-
-const headerStyle = {
-  marginBottom: "24px",
-  borderBottom: "1.5px solid #1a2238",
-  paddingBottom: "16px"
+  color: "#030817"
 };
 
 const boxStyle = {
-   border: "1.5px solid #1a22383b",
+  border: "1.5px solid #1a22383b",
   padding: "20px",
   borderRadius: "16px",
-  marginTop: "18px",
+  marginTop: "20px",
   backgroundColor: "#f9f9f9",
-  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.08)"
-};
-
-const labelText = {
-  marginBottom: "8px",
-  color: "#374151",
-  fontWeight: "500"
+  boxShadow: "0 6px 16px rgba(3, 8, 23, 0.46)"
 };
 
 const activeStyle = {
   background: "#d1e7dd",
   color: "#0f5132",
-  padding: "4px 9px",
+  padding: "5px 10px",
   borderRadius: "20px",
+  fontWeight: "bold"
+};
+
+const passwordHintStyle = {
   fontSize: "13px",
-  border: "1px solid #0f5132",
-  fontWeight: "600"
+  color: "#666",
+  marginTop: "6px",
+  marginBottom: 0
 };
 
 export default SettingsPage;
