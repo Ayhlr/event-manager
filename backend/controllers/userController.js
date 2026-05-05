@@ -55,30 +55,51 @@ const updateMyProfile = async (req, res) => {
   }
 };
 
+
 const changePassword = async (req, res) => {
   try {
-    const { currentPassword, newPassword, confirmPassword } = req.body;
+    const { currentPassword, newPassword } = req.body;
 
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      return res.status(400).json({ message: "Please fill all password fields" });
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        message: "Current password and new password are required"
+      });
     }
 
-    if (newPassword !== confirmPassword) {
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/;
+
+    if (!passwordRegex.test(newPassword)) {
       return res.status(400).json({
-        message: "New password and confirm password do not match"
+        message:
+          "New password must be at least 6 characters and include one letter, one number, and one special character"
       });
     }
 
     const user = await User.findById(req.user._id);
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({
+        message: "User not found"
+      });
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    const isCurrentPasswordCorrect = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
 
-    if (!isMatch) {
-      return res.status(400).json({ message: "Current password is incorrect" });
+    if (!isCurrentPasswordCorrect) {
+      return res.status(400).json({
+        message: "Current password is incorrect"
+      });
+    }
+
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+
+    if (isSamePassword) {
+      return res.status(400).json({
+        message: "New password cannot be the same as the current password"
+      });
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
@@ -88,11 +109,12 @@ const changePassword = async (req, res) => {
       message: "Password changed successfully"
     });
   } catch (error) {
-    console.log("Change password error:", error.message);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: "Server error",
+      error: error.message
+    });
   }
 };
-
 const deleteMyAccount = async (req, res) => {
   try {
     await User.findByIdAndDelete(req.user._id);

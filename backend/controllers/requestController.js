@@ -1,6 +1,7 @@
 const Request = require("../models/Request");
 const Event = require("../models/Event");
 const PointsHistory = require("../models/PointsHistory");
+const Registration = require("../models/Registration");
 
 const createOrganizerRequest = async (req, res) => {
   try {
@@ -102,7 +103,9 @@ const updateRequestStatus = async (req, res) => {
       });
     }
 
-    const request = await Request.findById(req.params.id).populate("event");
+    const request = await Request.findById(req.params.id)
+  .populate("event")
+  .populate("user", "firstName lastName email studentId");
 
     if (!request) {
       return res.status(404).json({ message: "Request not found" });
@@ -119,21 +122,42 @@ const updateRequestStatus = async (req, res) => {
     const updatedRequest = await request.save();
 
     if (status === "approved") {
-      const existingPoints = await PointsHistory.findOne({
-        user: request.user,
-        event: request.event._id
-      });
+  const existingRegistration = await Registration.findOne({
+    user: request.user,
+    event: request.event._id
+  });
 
-      if (!existingPoints) {
-        await PointsHistory.create({
-          user: request.user,
-          event: request.event._id,
-          eventName: request.event.title,
-          points: 50,
-          status: "pending"
-        });
-      }
-    }
+  if (!existingRegistration) {
+    await Registration.create({
+      user: request.user,
+      event: request.event._id,
+      status: "confirmed",
+      joinType: "organizer_request",
+      pointsEarned: 0,
+      name: request.name,
+      email: request.email,
+      studentId: request.user?.studentId || ""
+    });
+
+    request.event.attendingCount += 1;
+    await request.event.save();
+  }
+
+  const existingPoints = await PointsHistory.findOne({
+    user: request.user,
+    event: request.event._id
+  });
+
+  if (!existingPoints) {
+    await PointsHistory.create({
+      user: request.user,
+      event: request.event._id,
+      eventName: request.event.title,
+      points: 50,
+      status: "pending"
+    });
+  }
+}
 
     res.status(200).json({
       message: `Request ${status} successfully`,

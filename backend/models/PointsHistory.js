@@ -18,10 +18,10 @@ const pointsHistorySchema = new mongoose.Schema(
       trim: true
     },
     points: {
-      type: Number,
-      required: true,
-      default: 0
-    },
+  type: Number,
+  required: true,
+  default: 50
+},
     status: {
       type: String,
       enum: ["pending", "earned", "revoked"],
