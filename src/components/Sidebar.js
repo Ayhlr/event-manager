@@ -28,7 +28,6 @@ function Sidebar() {
 
   const adminMenu = [
     { name: "Home", path: "/admin" },
-    { name: "Manager Requests", path: "/admin/manager-requests" },
     { name: "Manage Managers", path: "/admin/manage-managers" },
     { name: "Event Approvals", path: "/admin/event-approvals" },
     { name: "Approved Events", path: "/admin/approved-events" },

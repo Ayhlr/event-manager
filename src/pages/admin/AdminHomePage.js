@@ -46,7 +46,6 @@ function AdminDashboardPage() {
   const pendingEvents = events.filter((event) => event.status === "pending");
   const approvedEvents = events.filter((event) => event.status === "approved");
 
-  const recentManagerRequests = pendingManagerRequests.slice(0, 3);
   const recentPendingEvents = pendingEvents.slice(0, 3);
   const recentManagers = approvedManagers.slice(0, 3);
 
@@ -110,14 +109,7 @@ function AdminDashboardPage() {
         <h3 style={{ marginBottom: "15px" }}>System Overview</h3>
 
         <div style={statsGridStyle}>
-          <div style={statCardStyle}>
-            <div style={statTopStyle}>
-              <span style={{ fontSize: "22px" }}>📄</span>
-              <strong>{pendingManagerRequests.length}</strong>
-            </div>
-            <p style={statTitleStyle}>Pending Manager Requests</p>
-            <small style={mutedStyle}>Awaiting approval</small>
-          </div>
+          
 
           <div style={statCardStyle}>
             <div style={statTopStyle}>
@@ -152,37 +144,7 @@ function AdminDashboardPage() {
         </h3>
 
         <div style={activityGridStyle}>
-          <div style={sectionCardStyle}>
-            <div style={sectionHeaderStyle}>
-              <strong>Manager Requests</strong>
-              <small style={mutedStyle}>Latest signup requests</small>
-            </div>
-
-            <div style={sectionBodyStyle}>
-              {recentManagerRequests.length === 0 ? (
-                <p style={mutedStyle}>No pending manager requests.</p>
-              ) : (
-                recentManagerRequests.map((request) => (
-                  <div key={request._id} style={listItemStyle}>
-                    <div>
-                      <strong>{getManagerName(request)}</strong>
-                      <br />
-                      <small style={mutedStyle}>{getManagerEmail(request)}</small>
-                    </div>
-
-                    <small>{formatDate(request.date || request.createdAt)}</small>
-                  </div>
-                ))
-              )}
-
-              <button
-                style={wideButtonStyle}
-                onClick={() => navigate("/admin/manager-requests")}
-              >
-                View All Requests →
-              </button>
-            </div>
-          </div>
+        
 
           <div style={sectionCardStyle}>
             <div style={sectionHeaderStyle}>

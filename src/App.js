@@ -25,7 +25,6 @@ import ParticipantsPage from "./pages/manager/ParticipantsPage";
 /* Admin pages */
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminHomePage from "./pages/admin/AdminHomePage";
-import ManagerRequestsPage from "./pages/admin/ManagerRequestsPage";
 import ManageManagersPage from "./pages/admin/ManageManagersPage";
 import EventApprovalsPage from "./pages/admin/EventApprovalsPage";
 import ApprovedEventsPage from "./pages/admin/ApprovedEventsPage";
@@ -98,7 +97,7 @@ function AppContent() {
         {/* ADMIN */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminHomePage />} />
-          <Route path="manager-requests" element={<ManagerRequestsPage />} />
+      
           <Route path="manage-managers" element={<ManageManagersPage />} />
           <Route path="event-approvals" element={<EventApprovalsPage />} />
           <Route path="approved-events" element={<ApprovedEventsPage />} />
